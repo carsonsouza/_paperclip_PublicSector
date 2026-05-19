@@ -10,6 +10,7 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 const DEFAULT_REQUEST = path.join(REPO_ROOT, "report", "stn", "stn-import-request-pilot.json");
 const DEFAULT_OUTPUT = path.join(REPO_ROOT, "report", "stn", "stn-import-preview-result.json");
 const DEFAULT_API_BASE = "http://127.0.0.1:3000";
+const ALL_COLLISION_STRATEGIES = new Set(["rename", "skip", "replace"]);
 const VALID_COLLISION_STRATEGIES = new Set(["rename", "skip"]);
 
 export function resolvePreviewRoute(targetMode, companyId) {
@@ -34,6 +35,19 @@ export function applyImportRequestOverrides(requestBody, { targetCompanyId = nul
       throw new Error("Valor inválido para --collision-strategy. Use: rename | skip");
     }
     result.collisionStrategy = normalized;
+  }
+
+  const normalizedCollision = typeof result.collisionStrategy === "string"
+    ? result.collisionStrategy.trim().toLowerCase()
+    : null;
+  if (normalizedCollision !== null) {
+    if (!ALL_COLLISION_STRATEGIES.has(normalizedCollision)) {
+      throw new Error("collisionStrategy inválida no request. Use: rename | skip | replace");
+    }
+    result.collisionStrategy = normalizedCollision;
+  }
+  if (result?.target?.mode === "existing_company" && normalizedCollision === "replace") {
+    throw new Error("Import seguro para existing_company não permite collisionStrategy=replace. Use --collision-strategy rename|skip.");
   }
   return result;
 }

@@ -1,8 +1,8 @@
 import path from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { applyImportRequestOverrides, resolvePreviewRoute } from "./run-stn-import-dry-run.mjs";
 
-import { resolvePreviewRoute } from "./run-stn-import-dry-run.mjs";
 import { resolveApplyRoute } from "./run-stn-import-apply.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -53,6 +53,7 @@ function parseArgs(argv) {
     output: DEFAULT_OUTPUT,
     apiBase: DEFAULT_API_BASE,
     targetCompanyId: null,
+    collisionStrategy: null,
     authEnvVar: DEFAULT_AUTH_ENV_VAR,
     help: false,
   };
@@ -65,6 +66,11 @@ function parseArgs(argv) {
       } else {
         options[key] = path.resolve(argv[i + 1]);
       }
+      i += 1;
+      continue;
+    }
+    if (arg === "--collision-strategy" && argv[i + 1]) {
+      options.collisionStrategy = String(argv[i + 1]).trim();
       i += 1;
       continue;
     }
@@ -86,6 +92,7 @@ function printHelp() {
     "  --output <path>",
     "  --api-base <url>",
     "  --target-company-id <id>",
+    "  --collision-strategy <rename|skip>",
     "  --auth-env-var <name>",
     "  --no-auth",
     "",
@@ -105,13 +112,11 @@ async function main() {
     return;
   }
 
-  const requestBody = JSON.parse(await readFile(args.request, "utf8"));
-  if (args.targetCompanyId) {
-    requestBody.target = {
-      mode: "existing_company",
-      companyId: args.targetCompanyId,
-    };
-  }
+  const requestBodyRaw = JSON.parse(await readFile(args.request, "utf8"));
+  const requestBody = applyImportRequestOverrides(requestBodyRaw, {
+    targetCompanyId: args.targetCompanyId,
+    collisionStrategy: args.collisionStrategy,
+  });
   const targetMode = requestBody?.target?.mode ?? "new_company";
   const targetCompanyId = requestBody?.target?.companyId ?? null;
   const commands = buildCurlCommands({
@@ -129,6 +134,7 @@ async function main() {
     args.authEnvVar
       ? `# Auth header uses PowerShell env var: $env:${args.authEnvVar}`
       : "# Auth header disabled (--no-auth)",
+    `# Collision strategy: ${requestBody?.collisionStrategy ?? "default(server)"}`,
     "",
     "# Preview",
     commands.preview,

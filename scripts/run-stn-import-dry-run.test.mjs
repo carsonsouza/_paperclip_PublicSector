@@ -36,3 +36,25 @@ test("applyImportRequestOverrides rejects invalid collision strategy", () => {
     /--collision-strategy/,
   );
 });
+
+test("applyImportRequestOverrides rejects invalid request collisionStrategy", () => {
+  assert.throws(
+    () => applyImportRequestOverrides({ collisionStrategy: "something-else" }, {}),
+    /collisionStrategy inválida no request/,
+  );
+});
+
+test("applyImportRequestOverrides blocks replace for existing company target", () => {
+  assert.throws(
+    () => applyImportRequestOverrides(
+      { target: { mode: "existing_company", companyId: "company-123" }, collisionStrategy: "replace" },
+      {},
+    ),
+    /não permite collisionStrategy=replace/,
+  );
+});
+
+test("applyImportRequestOverrides normalizes request collisionStrategy case", () => {
+  const result = applyImportRequestOverrides({ collisionStrategy: "ReNaMe" }, {});
+  assert.equal(result.collisionStrategy, "rename");
+});
