@@ -1,4 +1,5 @@
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { buildAuthHeaders, DEFAULT_TOKEN_ENV_VAR } from "./stn-auth.mjs";
@@ -75,12 +76,20 @@ export function assertApplyAllowed({ apply, yes, previewSummary, maxCollisions }
   }
 }
 
+export function hashJson(value) {
+  return createHash("sha256")
+    .update(JSON.stringify(value))
+    .digest("hex");
+}
+
 export function buildOnboardingExecutionReport({
   apiBase,
   previewRoute,
   applyRoute,
   requestBody,
   previewSummary,
+  previewResult,
+  applyResult,
   previewPath,
   previewSummaryPath,
   applyPath,
@@ -98,6 +107,12 @@ export function buildOnboardingExecutionReport({
       collisionStrategy: requestBody?.collisionStrategy ?? null,
       include: requestBody?.include ?? null,
       agents: requestBody?.agents ?? null,
+    },
+    fingerprints: {
+      requestSha256: hashJson(requestBody ?? {}),
+      previewResultSha256: hashJson(previewResult ?? {}),
+      previewSummarySha256: hashJson(previewSummary ?? {}),
+      applyResultSha256: applyExecuted ? hashJson(applyResult ?? {}) : null,
     },
     preview: {
       outputFile: previewPath,
@@ -243,8 +258,9 @@ async function main() {
   });
 
   let applyPath = null;
+  let applyResult = null;
   if (args.apply) {
-    const applyResult = await postJson(args.apiBase, applyRoute, requestBody, authHeaders);
+    applyResult = await postJson(args.apiBase, applyRoute, requestBody, authHeaders);
     applyPath = path.join(args.outputDir, "stn-import-apply-result.json");
     await writeFile(applyPath, `${JSON.stringify(applyResult, null, 2)}\n`, "utf8");
   }
@@ -254,6 +270,8 @@ async function main() {
     applyRoute,
     requestBody,
     previewSummary,
+    previewResult,
+    applyResult,
     previewPath,
     previewSummaryPath,
     applyPath,

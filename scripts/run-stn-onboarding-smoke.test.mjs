@@ -5,6 +5,7 @@ import {
   assertApplyAllowed,
   buildOnboardingExecutionReport,
   buildRequestBodyForTarget,
+  hashJson,
   requireApplyConfirmation,
   summarizePreviewPlan,
 } from "./run-stn-onboarding-smoke.mjs";
@@ -90,17 +91,23 @@ test("assertApplyAllowed accepts preview-only mode", () => {
 });
 
 test("buildOnboardingExecutionReport returns consolidated execution metadata", () => {
+  const requestBody = {
+    target: { mode: "existing_company", companyId: "company-123" },
+    collisionStrategy: "rename",
+    include: { company: true, agents: true },
+    agents: "all",
+  };
+  const previewResult = { warnings: ["w1"], plan: { agentPlans: [] } };
+  const previewSummary = { warnings: 1, errors: 0, collisions: 2 };
+  const applyResult = { company: { id: "company-123", action: "updated" } };
   const report = buildOnboardingExecutionReport({
     apiBase: "http://127.0.0.1:3000",
     previewRoute: "/api/companies/company-123/imports/preview",
     applyRoute: "/api/companies/company-123/imports/apply",
-    requestBody: {
-      target: { mode: "existing_company", companyId: "company-123" },
-      collisionStrategy: "rename",
-      include: { company: true, agents: true },
-      agents: "all",
-    },
-    previewSummary: { warnings: 1, errors: 0, collisions: 2 },
+    requestBody,
+    previewResult,
+    previewSummary,
+    applyResult,
     previewPath: "report/stn/stn-import-preview-result.json",
     previewSummaryPath: "report/stn/stn-import-preview-summary.json",
     applyPath: "report/stn/stn-import-apply-result.json",
@@ -112,7 +119,28 @@ test("buildOnboardingExecutionReport returns consolidated execution metadata", (
   assert.equal(report.routes.apply, "/api/companies/company-123/imports/apply");
   assert.equal(report.request.target.mode, "existing_company");
   assert.equal(report.request.collisionStrategy, "rename");
+  assert.equal(report.fingerprints.requestSha256, hashJson(requestBody));
+  assert.equal(report.fingerprints.previewResultSha256, hashJson(previewResult));
+  assert.equal(report.fingerprints.previewSummarySha256, hashJson(previewSummary));
+  assert.equal(report.fingerprints.applyResultSha256, hashJson(applyResult));
   assert.equal(report.preview.summary.collisions, 2);
   assert.equal(report.apply.executed, true);
   assert.equal(report.apply.outputFile, "report/stn/stn-import-apply-result.json");
+});
+
+test("buildOnboardingExecutionReport sets null apply hash when apply not executed", () => {
+  const report = buildOnboardingExecutionReport({
+    apiBase: "http://127.0.0.1:3000",
+    previewRoute: "/api/companies/import/preview",
+    applyRoute: "/api/companies/import",
+    requestBody: { target: { mode: "new_company", newCompanyName: "STN" } },
+    previewResult: { warnings: [] },
+    previewSummary: { warnings: 0, errors: 0, collisions: 0 },
+    applyResult: null,
+    previewPath: "preview.json",
+    previewSummaryPath: "summary.json",
+    applyPath: null,
+    applyExecuted: false,
+  });
+  assert.equal(report.fingerprints.applyResultSha256, null);
 });
