@@ -2644,6 +2644,78 @@ describe("company portability", () => {
     );
   });
 
+  it("preserves task executionPolicy through export and import", async () => {
+    const portability = companyPortabilityService({} as any);
+    const policy = {
+      mode: "normal",
+      commentRequired: true,
+      stages: [
+        {
+          type: "approval",
+          approvalsNeeded: 1,
+          participants: [{ type: "user", userId: "board-user" }],
+        },
+      ],
+    };
+
+    projectSvc.list.mockResolvedValue([]);
+    projectSvc.listWorkspaces.mockResolvedValue([]);
+    issueSvc.list.mockResolvedValue([
+      {
+        id: "issue-1",
+        identifier: "PAP-1",
+        title: "Needs board approval",
+        description: "Requires explicit approval stage.",
+        projectId: null,
+        projectWorkspaceId: null,
+        assigneeAgentId: null,
+        status: "todo",
+        priority: "high",
+        labelIds: [],
+        billingCode: null,
+        executionPolicy: policy,
+        executionWorkspaceSettings: null,
+        assigneeAdapterOverrides: null,
+      },
+    ]);
+
+    const exported = await portability.exportBundle("company-1", {
+      include: { company: true, agents: false, projects: false, issues: true },
+    });
+
+    const extension = asTextFile(exported.files[".paperclip.yaml"]);
+    expect(extension).toContain("executionPolicy:");
+    expect(extension).toContain("stages:");
+    expect(extension).toContain('type: "approval"');
+
+    companySvc.create.mockResolvedValue({ id: "company-imported", name: "Imported" });
+    accessSvc.ensureMembership.mockResolvedValue(undefined);
+    agentSvc.list.mockResolvedValue([]);
+    projectSvc.list.mockResolvedValue([]);
+    issueSvc.create.mockResolvedValue({ id: "issue-imported", title: "Needs board approval" });
+
+    await portability.importBundle({
+      source: { type: "inline", rootPath: exported.rootPath, files: exported.files },
+      include: { company: true, agents: false, projects: false, issues: true },
+      target: { mode: "new_company", newCompanyName: "Imported" },
+      agents: "all",
+      collisionStrategy: "rename",
+    }, "user-1");
+
+    expect(issueSvc.create).toHaveBeenCalledWith(
+      "company-imported",
+      expect.objectContaining({
+        executionPolicy: expect.objectContaining({
+          mode: "normal",
+          commentRequired: true,
+          stages: expect.arrayContaining([
+            expect.objectContaining({ type: "approval" }),
+          ]),
+        }),
+      }),
+    );
+  });
+
   it("does not export raw comment author user ids", async () => {
     const portability = companyPortabilityService({} as any);
 

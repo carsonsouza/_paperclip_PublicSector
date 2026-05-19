@@ -162,6 +162,7 @@ export const portabilityIssueManifestEntrySchema = z.object({
   priority: z.string().nullable(),
   labelIds: z.array(z.string().min(1)).default([]),
   billingCode: z.string().nullable(),
+  executionPolicy: z.record(z.string(), z.unknown()).nullable(),
   executionWorkspaceSettings: z.record(z.string(), z.unknown()).nullable(),
   assigneeAdapterOverrides: z.record(z.string(), z.unknown()).nullable(),
   comments: z.array(portabilityIssueCommentManifestEntrySchema).default([]),

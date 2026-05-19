@@ -37,6 +37,60 @@ function buildMarkdown(frontmatter, body = "") {
   return `${renderFrontmatter(frontmatter)}\n\n${content}\n`;
 }
 
+function renderYamlScalar(value) {
+  if (typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (value === null) return "null";
+  return JSON.stringify(value);
+}
+
+function renderYamlBlock(value, indentLevel = 0) {
+  const indent = "  ".repeat(indentLevel);
+  if (Array.isArray(value)) {
+    if (value.length === 0) return [`${indent}[]`];
+    return value.flatMap((entry) => {
+      const isObject = entry && typeof entry === "object" && !Array.isArray(entry);
+      if (!isObject) return [`${indent}- ${renderYamlScalar(entry)}`];
+      const entries = Object.entries(entry);
+      if (entries.length === 0) return [`${indent}- {}`];
+      const [firstKey, firstValue] = entries[0];
+      const lines = [];
+      if (firstValue && typeof firstValue === "object") {
+        lines.push(`${indent}- ${firstKey}:`);
+        lines.push(...renderYamlBlock(firstValue, indentLevel + 2));
+      } else {
+        lines.push(`${indent}- ${firstKey}: ${renderYamlScalar(firstValue)}`);
+      }
+      for (const [key, nested] of entries.slice(1)) {
+        if (nested && typeof nested === "object") {
+          lines.push(`${indent}  ${key}:`);
+          lines.push(...renderYamlBlock(nested, indentLevel + 2));
+        } else {
+          lines.push(`${indent}  ${key}: ${renderYamlScalar(nested)}`);
+        }
+      }
+      return lines;
+    });
+  }
+
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value);
+    if (entries.length === 0) return [`${indent}{}`];
+    return entries.flatMap(([key, nested]) => {
+      if (nested && typeof nested === "object") {
+        return [`${indent}${key}:`, ...renderYamlBlock(nested, indentLevel + 1)];
+      }
+      return [`${indent}${key}: ${renderYamlScalar(nested)}`];
+    });
+  }
+
+  return [`${indent}${renderYamlScalar(value)}`];
+}
+
+function toYamlDocument(obj) {
+  return `${renderYamlBlock(obj, 0).join("\n")}\n`;
+}
+
 function slugify(value) {
   return value
     .toLowerCase()
@@ -105,6 +159,7 @@ export function generateTemplateFiles(structure) {
   }
 
   const unidadesTopo = units.filter((unit) => unit.level === 2);
+  const tasksExtension = {};
   for (const unit of unidadesTopo) {
     const ownerSlug = slugBySigla.get(unit.sigla) ?? unitSlug(unit);
     const projectSlug = `operacao-${ownerSlug}`;
@@ -136,7 +191,47 @@ export function generateTemplateFiles(structure) {
         "- critérios de monitoramento e prestação de contas.",
       ].join("\n"),
     );
+
+    const principalCompetencia = unit.competencias[0] ?? null;
+    tasksExtension[taskSlug] = {
+      priority: "high",
+      executionPolicy: {
+        mode: "normal",
+        commentRequired: true,
+        stages: [
+          {
+            type: "review",
+            approvalsNeeded: 1,
+            participants: [{ type: "agent", agentId: "00000000-0000-4000-8000-000000000001" }],
+          },
+          {
+            type: "approval",
+            approvalsNeeded: 1,
+            participants: [{ type: "user", userId: "board-user" }],
+          },
+        ],
+      },
+      metadata: {
+        publicSector: {
+          unitSigla: unit.sigla,
+          unitNome: unit.nome,
+          competencyRef: principalCompetencia
+            ? `${unit.sigla}:${principalCompetencia.code}`
+            : `${unit.sigla}:GERAL`,
+          governanceClass: "ato_critico",
+          auditTrailRequired: true,
+          source: "regimento_stn_20260415",
+        },
+      },
+    };
   }
+
+  files[".paperclip.yaml"] = toYamlDocument({
+    company: {
+      requireBoardApprovalForNewAgents: true,
+    },
+    tasks: tasksExtension,
+  });
 
   return files;
 }

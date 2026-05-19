@@ -122,6 +122,7 @@ export interface CompanyPortabilityIssueManifestEntry {
   priority: string | null;
   labelIds: string[];
   billingCode: string | null;
+  executionPolicy: Record<string, unknown> | null;
   executionWorkspaceSettings: Record<string, unknown> | null;
   assigneeAdapterOverrides: Record<string, unknown> | null;
   comments: CompanyPortabilityIssueCommentManifestEntry[];

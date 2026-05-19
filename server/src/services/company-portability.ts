@@ -2773,6 +2773,9 @@ function buildManifestFromPackageFiles(
         ? extension.labelIds.filter((entry): entry is string => typeof entry === "string")
         : [],
       billingCode: asString(extension.billingCode),
+      executionPolicy: isPlainRecord(extension.executionPolicy)
+        ? extension.executionPolicy
+        : null,
       executionWorkspaceSettings: isPlainRecord(extension.executionWorkspaceSettings)
         ? extension.executionWorkspaceSettings
         : null,
@@ -3493,6 +3496,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
         priority: issue.priority,
         labelIds: issue.labelIds ?? undefined,
         billingCode: issue.billingCode ?? null,
+        executionPolicy: issue.executionPolicy ?? undefined,
         projectWorkspaceKey: projectWorkspaceKey ?? undefined,
         executionWorkspaceSettings: issue.executionWorkspaceSettings ?? undefined,
         assigneeAdapterOverrides: issue.assigneeAdapterOverrides ?? undefined,
@@ -4620,6 +4624,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
             ? manifestIssue.priority as typeof ISSUE_PRIORITIES[number]
             : "medium",
           billingCode: manifestIssue.billingCode,
+          executionPolicy: manifestIssue.executionPolicy,
           assigneeAdapterOverrides: manifestIssue.assigneeAdapterOverrides,
           executionWorkspaceSettings: manifestIssue.executionWorkspaceSettings,
           labelIds: manifestIssue.labelIds ?? [],

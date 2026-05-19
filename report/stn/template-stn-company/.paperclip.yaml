@@ -1,0 +1,363 @@
+company:
+  requireBoardApprovalForNewAgents: true
+tasks:
+  plano-competencias-ascom:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "ASCOM"
+        unitNome: "Assessoria de Comunicação"
+        competencyRef: "ASCOM:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-aspre:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "ASPRE"
+        unitNome: "Assessoria de Projetos Estratégicos"
+        competencyRef: "ASPRE:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-asrcc:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "ASRCC"
+        unitNome: "Assessoria de Riscos, Controles e Conformidade"
+        competencyRef: "ASRCC:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-gabin:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "GABIN"
+        unitNome: "Gabinete"
+        competencyRef: "GABIN:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-sudip:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "SUDIP"
+        unitNome: "Subsecretaria da Dívida Pública"
+        competencyRef: "SUDIP:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-suafi:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "SUAFI"
+        unitNome: "Subsecretaria de Administração Financeira Federal"
+        competencyRef: "SUAFI:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-suati:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "SUATI"
+        unitNome: "Subsecretaria de Administração, Transformação Digital e Inovação"
+        competencyRef: "SUATI:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-coges:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "COGES"
+        unitNome: "Comitê de Gestão"
+        competencyRef: "COGES:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-sucon:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "SUCON"
+        unitNome: "Subsecretaria de Contabilidade Pública"
+        competencyRef: "SUCON:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-sugef:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "SUGEF"
+        unitNome: "Subsecretaria de Gestão Fiscal"
+        competencyRef: "SUGEF:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-cpf:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "CPF"
+        unitNome: "Comitê de Programação Financeira"
+        competencyRef: "CPF:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-supef:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "SUPEF"
+        unitNome: "Subsecretaria de Planejamento Estratégico da Política Fiscal"
+        competencyRef: "SUPEF:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-surin:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "SURIN"
+        unitNome: "Subsecretaria de Relações Financeiras Intergovernamentais"
+        competencyRef: "SURIN:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-cfss:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "CFSS"
+        unitNome: "Comitê de Finanças Sustentáveis Soberanas"
+        competencyRef: "CFSS:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-cesic:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "CESIC"
+        unitNome: "Comitê-Executivo de Segurança da Informação e Comunicações"
+        competencyRef: "CESIC:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"

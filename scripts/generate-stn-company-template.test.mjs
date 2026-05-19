@@ -38,8 +38,11 @@ test("generateTemplateFiles creates company, agent, project, and task templates"
   assert.ok(files["agents/gecon/AGENTS.md"]);
   assert.ok(files["projects/operacao-sugef/PROJECT.md"]);
   assert.ok(files["tasks/plano-competencias-sugef/TASK.md"]);
+  assert.ok(files[".paperclip.yaml"]);
 
   assert.match(files["agents/sugef/AGENTS.md"], /reportsTo: "stn"/);
   assert.match(files["agents/gecon/AGENTS.md"], /reportsTo: "sugef"/);
   assert.match(files["agents/stn/AGENTS.md"], /name: "STN"/);
+  assert.match(files[".paperclip.yaml"], /executionPolicy:/);
+  assert.match(files[".paperclip.yaml"], /competencyRef:/);
 });
