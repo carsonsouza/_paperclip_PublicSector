@@ -31,6 +31,57 @@ export function buildRequestBodyForTarget(requestBody, targetCompanyId) {
   };
 }
 
+export function summarizePreviewPlan(previewResult) {
+  const agentPlans = Array.isArray(previewResult?.plan?.agentPlans) ? previewResult.plan.agentPlans : [];
+  const projectPlans = Array.isArray(previewResult?.plan?.projectPlans) ? previewResult.plan.projectPlans : [];
+  const issuePlans = Array.isArray(previewResult?.plan?.issuePlans) ? previewResult.plan.issuePlans : [];
+
+  const countByAction = (items) => items.reduce((acc, item) => {
+    const action = item?.action;
+    if (!action) return acc;
+    acc[action] = (acc[action] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const agents = countByAction(agentPlans);
+  const projects = countByAction(projectPlans);
+  const issues = countByAction(issuePlans);
+  const warnings = Array.isArray(previewResult?.warnings) ? previewResult.warnings.length : 0;
+  const errors = Array.isArray(previewResult?.errors) ? previewResult.errors.length : 0;
+  const collisions = (agents.update ?? 0)
+    + (agents.skip ?? 0)
+    + (projects.update ?? 0)
+    + (projects.skip ?? 0)
+    + (issues.skip ?? 0);
+
+  return {
+    counts: {
+      agents,
+      projects,
+      issues,
+    },
+    warnings,
+    errors,
+    collisions,
+  };
+}
+
+export function assertApplyAllowed({ apply, yes, previewSummary, maxCollisions }) {
+  requireApplyConfirmation({ apply, yes });
+  if (!apply) return;
+  if (!previewSummary) {
+    throw new Error("Resumo de preview ausente para validação de apply.");
+  }
+  if (previewSummary.errors > 0) {
+    throw new Error(`Apply bloqueado: preview contém ${previewSummary.errors} erro(s).`);
+  }
+  if (maxCollisions !== null && previewSummary.collisions > maxCollisions) {
+    throw new Error(
+      `Apply bloqueado: preview contém ${previewSummary.collisions} colisão(ões), acima do limite ${maxCollisions}.`,
+    );
+  }
+}
+
 async function postJson(apiBase, route, body, authHeaders = {}) {
   const response = await fetch(`${apiBase}${route}`, {
     method: "POST",
@@ -58,6 +109,7 @@ function parseArgs(argv) {
     noAuth: false,
     apply: false,
     yes: false,
+    maxCollisions: null,
     help: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -84,6 +136,15 @@ function parseArgs(argv) {
       options.yes = true;
       continue;
     }
+    if (arg === "--max-collisions" && argv[i + 1]) {
+      const parsed = Number.parseInt(String(argv[i + 1]).trim(), 10);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        throw new Error("Valor inválido para --max-collisions. Use inteiro >= 0.");
+      }
+      options.maxCollisions = parsed;
+      i += 1;
+      continue;
+    }
     if (arg === "--help" || arg === "-h") options.help = true;
   }
   return options;
@@ -103,6 +164,7 @@ function printHelp() {
     "  --no-auth",
     "  --apply",
     "  --yes",
+    "  --max-collisions <n>",
     "",
     `Defaults:`,
     `  request:    ${DEFAULT_REQUEST}`,
@@ -119,8 +181,6 @@ async function main() {
     printHelp();
     return;
   }
-  requireApplyConfirmation(args);
-
   const requestBodyRaw = JSON.parse(await readFile(args.request, "utf8"));
   const requestBody = buildRequestBodyForTarget(requestBodyRaw, args.targetCompanyId);
   const targetMode = requestBody?.target?.mode ?? "new_company";
@@ -133,6 +193,15 @@ async function main() {
   await mkdir(args.outputDir, { recursive: true });
   const previewPath = path.join(args.outputDir, "stn-import-preview-result.json");
   await writeFile(previewPath, `${JSON.stringify(previewResult, null, 2)}\n`, "utf8");
+  const previewSummary = summarizePreviewPlan(previewResult);
+  const previewSummaryPath = path.join(args.outputDir, "stn-import-preview-summary.json");
+  await writeFile(previewSummaryPath, `${JSON.stringify(previewSummary, null, 2)}\n`, "utf8");
+  assertApplyAllowed({
+    apply: args.apply,
+    yes: args.yes,
+    previewSummary,
+    maxCollisions: args.maxCollisions,
+  });
 
   let applyPath = null;
   if (args.apply) {
@@ -143,7 +212,9 @@ async function main() {
 
   process.stdout.write([
     `Preview salvo em: ${previewPath}`,
+    `Resumo do preview salvo em: ${previewSummaryPath}`,
     args.apply ? `Apply salvo em: ${applyPath}` : "Apply não executado (use --apply --yes).",
+    `Preview warnings: ${previewSummary.warnings} | errors: ${previewSummary.errors} | collisions: ${previewSummary.collisions}`,
     `API base: ${args.apiBase}`,
     "",
   ].join("\n"));
