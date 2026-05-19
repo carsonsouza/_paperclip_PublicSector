@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { buildAuthHeaders, DEFAULT_TOKEN_ENV_VAR } from "./stn-auth.mjs";
 
-import { resolvePreviewRoute } from "./run-stn-import-dry-run.mjs";
+import { applyImportRequestOverrides, resolvePreviewRoute } from "./run-stn-import-dry-run.mjs";
 import { resolveApplyRoute } from "./run-stn-import-apply.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,14 +21,7 @@ export function requireApplyConfirmation({ apply, yes }) {
 }
 
 export function buildRequestBodyForTarget(requestBody, targetCompanyId) {
-  if (!targetCompanyId) return requestBody;
-  return {
-    ...requestBody,
-    target: {
-      mode: "existing_company",
-      companyId: targetCompanyId,
-    },
-  };
+  return applyImportRequestOverrides(requestBody, { targetCompanyId });
 }
 
 export function summarizePreviewPlan(previewResult) {
@@ -110,6 +103,7 @@ function parseArgs(argv) {
     apply: false,
     yes: false,
     maxCollisions: null,
+    collisionStrategy: null,
     help: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -134,6 +128,11 @@ function parseArgs(argv) {
     }
     if (arg === "--yes") {
       options.yes = true;
+      continue;
+    }
+    if (arg === "--collision-strategy" && argv[i + 1]) {
+      options.collisionStrategy = String(argv[i + 1]).trim();
+      i += 1;
       continue;
     }
     if (arg === "--max-collisions" && argv[i + 1]) {
@@ -162,6 +161,7 @@ function printHelp() {
     "  --token <value>",
     "  --token-env-var <name>",
     "  --no-auth",
+    "  --collision-strategy <rename|skip>",
     "  --apply",
     "  --yes",
     "  --max-collisions <n>",
@@ -182,7 +182,10 @@ async function main() {
     return;
   }
   const requestBodyRaw = JSON.parse(await readFile(args.request, "utf8"));
-  const requestBody = buildRequestBodyForTarget(requestBodyRaw, args.targetCompanyId);
+  const requestBody = applyImportRequestOverrides(requestBodyRaw, {
+    targetCompanyId: args.targetCompanyId,
+    collisionStrategy: args.collisionStrategy,
+  });
   const targetMode = requestBody?.target?.mode ?? "new_company";
   const targetCompanyId = requestBody?.target?.companyId ?? null;
   const previewRoute = resolvePreviewRoute(targetMode, targetCompanyId);

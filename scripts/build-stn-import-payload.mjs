@@ -20,6 +20,8 @@ const DEFAULT_TARGET = {
   mode: "new_company",
   newCompanyName: "Secretaria do Tesouro Nacional - Piloto",
 };
+const DEFAULT_COLLISION_STRATEGY = "rename";
+const VALID_COLLISION_STRATEGIES = new Set(["rename", "skip"]);
 
 const REQUIRED_FILES = [
   "COMPANY.md",
@@ -46,7 +48,15 @@ async function collectFiles(rootDir, currentDir, acc) {
   }
 }
 
-export function buildImportPayload({ rootPath, files, target, include }) {
+function normalizeCollisionStrategy(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (!VALID_COLLISION_STRATEGIES.has(normalized)) {
+    throw new Error("Valor inválido para collision strategy. Use: rename | skip");
+  }
+  return normalized;
+}
+
+export function buildImportPayload({ rootPath, files, target, include, collisionStrategy = DEFAULT_COLLISION_STRATEGY }) {
   const issues = [];
   for (const required of REQUIRED_FILES) {
     if (!files[required]) {
@@ -71,7 +81,7 @@ export function buildImportPayload({ rootPath, files, target, include }) {
     include,
     target,
     agents: "all",
-    collisionStrategy: "rename",
+    collisionStrategy: normalizeCollisionStrategy(collisionStrategy),
   };
 
   return {
@@ -100,6 +110,7 @@ function parseArgs(argv) {
     targetMode: "new_company",
     targetCompanyId: null,
     newCompanyName: DEFAULT_TARGET.newCompanyName,
+    collisionStrategy: DEFAULT_COLLISION_STRATEGY,
     help: false,
   };
 
@@ -139,6 +150,11 @@ function parseArgs(argv) {
       i += 1;
       continue;
     }
+    if (arg === "--collision-strategy" && argv[i + 1]) {
+      options.collisionStrategy = normalizeCollisionStrategy(argv[i + 1]);
+      i += 1;
+      continue;
+    }
     if (arg === "--help" || arg === "-h") {
       options.help = true;
     }
@@ -157,12 +173,14 @@ function printHelp() {
     "  --target <new|existing>",
     "  --target-company-id <id>",
     "  --new-company-name <name>",
+    "  --collision-strategy <rename|skip>",
     "",
     `Defaults:`,
     `  template-dir: ${DEFAULT_TEMPLATE_DIR}`,
     `  output:       ${DEFAULT_OUTPUT}`,
     `  request:      ${DEFAULT_REQUEST_OUTPUT}`,
     `  target:       new`,
+    `  collision:    ${DEFAULT_COLLISION_STRATEGY}`,
     "",
   ].join("\n"));
 }
@@ -199,6 +217,7 @@ async function main() {
     files,
     target,
     include: DEFAULT_INCLUDE,
+    collisionStrategy: args.collisionStrategy,
   });
   const requestPayload = buildImportRequest(result);
   await mkdir(path.dirname(args.output), { recursive: true });

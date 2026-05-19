@@ -2,6 +2,7 @@ import path from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { buildAuthHeaders, DEFAULT_TOKEN_ENV_VAR } from "./stn-auth.mjs";
+import { applyImportRequestOverrides } from "./run-stn-import-dry-run.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +26,7 @@ function parseArgs(argv) {
     output: DEFAULT_OUTPUT,
     apiBase: DEFAULT_API_BASE,
     targetCompanyId: null,
+    collisionStrategy: null,
     token: null,
     tokenEnvVar: DEFAULT_TOKEN_ENV_VAR,
     noAuth: false,
@@ -40,6 +42,11 @@ function parseArgs(argv) {
       } else {
         options[key] = path.resolve(argv[i + 1]);
       }
+      i += 1;
+      continue;
+    }
+    if (arg === "--collision-strategy" && argv[i + 1]) {
+      options.collisionStrategy = String(argv[i + 1]).trim();
       i += 1;
       continue;
     }
@@ -65,6 +72,7 @@ function printHelp() {
     "  --output <path>",
     "  --api-base <url>",
     "  --target-company-id <id>",
+    "  --collision-strategy <rename|skip>",
     "  --token <value>",
     "  --token-env-var <name>",
     "  --no-auth",
@@ -89,13 +97,11 @@ async function main() {
     throw new Error("Apply requer --yes.");
   }
 
-  const requestBody = JSON.parse(await readFile(args.request, "utf8"));
-  if (args.targetCompanyId) {
-    requestBody.target = {
-      mode: "existing_company",
-      companyId: args.targetCompanyId,
-    };
-  }
+  const requestBodyRaw = JSON.parse(await readFile(args.request, "utf8"));
+  const requestBody = applyImportRequestOverrides(requestBodyRaw, {
+    targetCompanyId: args.targetCompanyId,
+    collisionStrategy: args.collisionStrategy,
+  });
   const route = resolveApplyRoute(requestBody?.target?.mode, requestBody?.target?.companyId ?? null);
   const authHeaders = buildAuthHeaders(args);
   const response = await fetch(`${args.apiBase}${route}`, {

@@ -59,3 +59,41 @@ test("buildImportRequest returns API-ready body", () => {
   assert.equal(request.target.mode, "new_company");
   assert.equal(request.collisionStrategy, "rename");
 });
+
+test("buildImportPayload accepts skip collision strategy", () => {
+  const files = {
+    "COMPANY.md": "---\nkind: company\n---\n",
+    ".paperclip.yaml": "company:\n  requireBoardApprovalForNewAgents: true\n",
+    "agents/sugef/AGENTS.md": "---\nkind: agent\n---\n",
+    "projects/operacao-sugef/PROJECT.md": "---\nkind: project\n---\n",
+    "tasks/plano-competencias-sugef/TASK.md": "---\nkind: task\n---\n",
+  };
+  const result = buildImportPayload({
+    rootPath: "template-stn-company-pilot",
+    files,
+    include: { company: true, agents: true, projects: true, issues: true, skills: false },
+    target: { mode: "existing_company", companyId: "company-123" },
+    collisionStrategy: "skip",
+  });
+  assert.equal(result.payload.collisionStrategy, "skip");
+});
+
+test("buildImportPayload rejects invalid collision strategy", () => {
+  const files = {
+    "COMPANY.md": "---\nkind: company\n---\n",
+    ".paperclip.yaml": "company:\n  requireBoardApprovalForNewAgents: true\n",
+    "agents/sugef/AGENTS.md": "---\nkind: agent\n---\n",
+    "projects/operacao-sugef/PROJECT.md": "---\nkind: project\n---\n",
+    "tasks/plano-competencias-sugef/TASK.md": "---\nkind: task\n---\n",
+  };
+  assert.throws(
+    () => buildImportPayload({
+      rootPath: "template-stn-company-pilot",
+      files,
+      include: { company: true, agents: true, projects: true, issues: true, skills: false },
+      target: { mode: "new_company", newCompanyName: "STN Piloto" },
+      collisionStrategy: "replace",
+    }),
+    /collision strategy/,
+  );
+});

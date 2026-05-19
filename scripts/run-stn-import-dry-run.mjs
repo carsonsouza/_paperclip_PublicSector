@@ -10,6 +10,7 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 const DEFAULT_REQUEST = path.join(REPO_ROOT, "report", "stn", "stn-import-request-pilot.json");
 const DEFAULT_OUTPUT = path.join(REPO_ROOT, "report", "stn", "stn-import-preview-result.json");
 const DEFAULT_API_BASE = "http://127.0.0.1:3000";
+const VALID_COLLISION_STRATEGIES = new Set(["rename", "skip"]);
 
 export function resolvePreviewRoute(targetMode, companyId) {
   if (targetMode === "existing_company") {
@@ -19,12 +20,31 @@ export function resolvePreviewRoute(targetMode, companyId) {
   return "/api/companies/import/preview";
 }
 
+export function applyImportRequestOverrides(requestBody, { targetCompanyId = null, collisionStrategy = null } = {}) {
+  const result = { ...requestBody };
+  if (targetCompanyId) {
+    result.target = {
+      mode: "existing_company",
+      companyId: targetCompanyId,
+    };
+  }
+  if (collisionStrategy !== null) {
+    const normalized = String(collisionStrategy).trim().toLowerCase();
+    if (!VALID_COLLISION_STRATEGIES.has(normalized)) {
+      throw new Error("Valor inválido para --collision-strategy. Use: rename | skip");
+    }
+    result.collisionStrategy = normalized;
+  }
+  return result;
+}
+
 function parseArgs(argv) {
   const options = {
     request: DEFAULT_REQUEST,
     output: DEFAULT_OUTPUT,
     apiBase: DEFAULT_API_BASE,
     targetCompanyId: null,
+    collisionStrategy: null,
     token: null,
     tokenEnvVar: DEFAULT_TOKEN_ENV_VAR,
     noAuth: false,
@@ -39,6 +59,11 @@ function parseArgs(argv) {
       } else {
         options[key] = path.resolve(argv[i + 1]);
       }
+      i += 1;
+      continue;
+    }
+    if (arg === "--collision-strategy" && argv[i + 1]) {
+      options.collisionStrategy = String(argv[i + 1]).trim();
       i += 1;
       continue;
     }
@@ -60,6 +85,7 @@ function printHelp() {
     "  --output <path>",
     "  --api-base <url>",
     "  --target-company-id <id>",
+    "  --collision-strategy <rename|skip>",
     "  --token <value>",
     "  --token-env-var <name>",
     "  --no-auth",
@@ -80,13 +106,11 @@ async function main() {
     return;
   }
 
-  const requestBody = JSON.parse(await readFile(args.request, "utf8"));
-  if (args.targetCompanyId) {
-    requestBody.target = {
-      mode: "existing_company",
-      companyId: args.targetCompanyId,
-    };
-  }
+  const requestBodyRaw = JSON.parse(await readFile(args.request, "utf8"));
+  const requestBody = applyImportRequestOverrides(requestBodyRaw, {
+    targetCompanyId: args.targetCompanyId,
+    collisionStrategy: args.collisionStrategy,
+  });
   const route = resolvePreviewRoute(requestBody?.target?.mode, requestBody?.target?.companyId ?? null);
   const authHeaders = buildAuthHeaders(args);
   const response = await fetch(`${args.apiBase}${route}`, {
