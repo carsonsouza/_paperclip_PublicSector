@@ -1,6 +1,7 @@
 import path from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { buildAuthHeaders, DEFAULT_TOKEN_ENV_VAR } from "./stn-auth.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,20 +25,25 @@ function parseArgs(argv) {
     output: DEFAULT_OUTPUT,
     apiBase: DEFAULT_API_BASE,
     targetCompanyId: null,
+    token: null,
+    tokenEnvVar: DEFAULT_TOKEN_ENV_VAR,
+    noAuth: false,
     help: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
-    if ((arg === "--request" || arg === "--output" || arg === "--api-base" || arg === "--target-company-id") && argv[i + 1]) {
+    if ((arg === "--request" || arg === "--output" || arg === "--api-base" || arg === "--target-company-id" || arg === "--token" || arg === "--token-env-var") && argv[i + 1]) {
       const key = arg.replace(/^--/, "").replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
-      if (arg === "--api-base") {
-        options[key] = String(argv[i + 1]).trim();
-      } else if (arg === "--target-company-id") {
+      if (arg === "--api-base" || arg === "--target-company-id" || arg === "--token" || arg === "--token-env-var") {
         options[key] = String(argv[i + 1]).trim();
       } else {
         options[key] = path.resolve(argv[i + 1]);
       }
       i += 1;
+      continue;
+    }
+    if (arg === "--no-auth") {
+      options.noAuth = true;
       continue;
     }
     if (arg === "--help" || arg === "-h") options.help = true;
@@ -54,11 +60,15 @@ function printHelp() {
     "  --output <path>",
     "  --api-base <url>",
     "  --target-company-id <id>",
+    "  --token <value>",
+    "  --token-env-var <name>",
+    "  --no-auth",
     "",
     `Defaults:`,
     `  request:  ${DEFAULT_REQUEST}`,
     `  output:   ${DEFAULT_OUTPUT}`,
     `  api-base: ${DEFAULT_API_BASE}`,
+    `  token env: ${DEFAULT_TOKEN_ENV_VAR}`,
     "",
   ].join("\n"));
 }
@@ -78,10 +88,12 @@ async function main() {
     };
   }
   const route = resolvePreviewRoute(requestBody?.target?.mode, requestBody?.target?.companyId ?? null);
+  const authHeaders = buildAuthHeaders(args);
   const response = await fetch(`${args.apiBase}${route}`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
+      ...authHeaders,
     },
     body: JSON.stringify(requestBody),
   });

@@ -1,6 +1,7 @@
 import path from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { buildAuthHeaders, DEFAULT_TOKEN_ENV_VAR } from "./stn-auth.mjs";
 
 import { resolvePreviewRoute } from "./run-stn-import-dry-run.mjs";
 import { resolveApplyRoute } from "./run-stn-import-apply.mjs";
@@ -30,11 +31,12 @@ export function buildRequestBodyForTarget(requestBody, targetCompanyId) {
   };
 }
 
-async function postJson(apiBase, route, body) {
+async function postJson(apiBase, route, body, authHeaders = {}) {
   const response = await fetch(`${apiBase}${route}`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
+      ...authHeaders,
     },
     body: JSON.stringify(body),
   });
@@ -51,20 +53,27 @@ function parseArgs(argv) {
     outputDir: DEFAULT_OUTPUT_DIR,
     apiBase: DEFAULT_API_BASE,
     targetCompanyId: null,
+    token: null,
+    tokenEnvVar: DEFAULT_TOKEN_ENV_VAR,
+    noAuth: false,
     apply: false,
     yes: false,
     help: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
-    if ((arg === "--request" || arg === "--output-dir" || arg === "--api-base" || arg === "--target-company-id") && argv[i + 1]) {
+    if ((arg === "--request" || arg === "--output-dir" || arg === "--api-base" || arg === "--target-company-id" || arg === "--token" || arg === "--token-env-var") && argv[i + 1]) {
       const key = arg.replace(/^--/, "").replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
-      if (arg === "--api-base" || arg === "--target-company-id") {
+      if (arg === "--api-base" || arg === "--target-company-id" || arg === "--token" || arg === "--token-env-var") {
         options[key] = String(argv[i + 1]).trim();
       } else {
         options[key] = path.resolve(argv[i + 1]);
       }
       i += 1;
+      continue;
+    }
+    if (arg === "--no-auth") {
+      options.noAuth = true;
       continue;
     }
     if (arg === "--apply") {
@@ -89,6 +98,9 @@ function printHelp() {
     "  --output-dir <path>",
     "  --api-base <url>",
     "  --target-company-id <id>",
+    "  --token <value>",
+    "  --token-env-var <name>",
+    "  --no-auth",
     "  --apply",
     "  --yes",
     "",
@@ -96,6 +108,7 @@ function printHelp() {
     `  request:    ${DEFAULT_REQUEST}`,
     `  output-dir: ${DEFAULT_OUTPUT_DIR}`,
     `  api-base:   ${DEFAULT_API_BASE}`,
+    `  token env:  ${DEFAULT_TOKEN_ENV_VAR}`,
     "",
   ].join("\n"));
 }
@@ -114,15 +127,16 @@ async function main() {
   const targetCompanyId = requestBody?.target?.companyId ?? null;
   const previewRoute = resolvePreviewRoute(targetMode, targetCompanyId);
   const applyRoute = resolveApplyRoute(targetMode, targetCompanyId);
+  const authHeaders = buildAuthHeaders(args);
 
-  const previewResult = await postJson(args.apiBase, previewRoute, requestBody);
+  const previewResult = await postJson(args.apiBase, previewRoute, requestBody, authHeaders);
   await mkdir(args.outputDir, { recursive: true });
   const previewPath = path.join(args.outputDir, "stn-import-preview-result.json");
   await writeFile(previewPath, `${JSON.stringify(previewResult, null, 2)}\n`, "utf8");
 
   let applyPath = null;
   if (args.apply) {
-    const applyResult = await postJson(args.apiBase, applyRoute, requestBody);
+    const applyResult = await postJson(args.apiBase, applyRoute, requestBody, authHeaders);
     applyPath = path.join(args.outputDir, "stn-import-apply-result.json");
     await writeFile(applyPath, `${JSON.stringify(applyResult, null, 2)}\n`, "utf8");
   }
