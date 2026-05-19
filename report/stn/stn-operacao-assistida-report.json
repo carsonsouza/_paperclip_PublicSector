@@ -1,0 +1,130 @@
+{
+  "generatedAt": "2026-05-19T14:56:13.329Z",
+  "status": "ready",
+  "pilotSiglas": [
+    "SUGEF",
+    "SUAFI",
+    "SUCON"
+  ],
+  "summary": {
+    "selectedUnits": 59,
+    "topUnits": 3,
+    "unresolvedUserRefs": 0,
+    "unitsWithoutIndicators": 0,
+    "userCatalogProvided": true
+  },
+  "units": [
+    {
+      "sigla": "SUAFI",
+      "nome": "Subsecretaria de Administração Financeira Federal",
+      "governanceParticipants": {
+        "reviewerUserId": "suafi.revisor@tesouro.gov.br",
+        "approverUserId": "suafi.subsecretario@tesouro.gov.br"
+      },
+      "governanceCoverage": {
+        "reviewerMapped": true,
+        "approverMapped": true
+      },
+      "indicators": [
+        {
+          "id": "prazo-medio-conclusao-dias",
+          "name": "Prazo médio de conclusão (dias)",
+          "periodicity": "mensal"
+        },
+        {
+          "id": "taxa-conclusao-no-prazo",
+          "name": "Taxa de conclusão no prazo (%)",
+          "periodicity": "mensal"
+        },
+        {
+          "id": "taxa-retrabalho",
+          "name": "Taxa de retrabalho (%)",
+          "periodicity": "mensal"
+        },
+        {
+          "id": "conformidade-execucao-financeira",
+          "name": "Conformidade da execução financeira (%)",
+          "periodicity": "mensal"
+        }
+      ],
+      "indicatorsCount": 4
+    },
+    {
+      "sigla": "SUCON",
+      "nome": "Subsecretaria de Contabilidade Pública",
+      "governanceParticipants": {
+        "reviewerUserId": "sucon.revisor@tesouro.gov.br",
+        "approverUserId": "sucon.subsecretario@tesouro.gov.br"
+      },
+      "governanceCoverage": {
+        "reviewerMapped": true,
+        "approverMapped": true
+      },
+      "indicators": [
+        {
+          "id": "prazo-medio-conclusao-dias",
+          "name": "Prazo médio de conclusão (dias)",
+          "periodicity": "mensal"
+        },
+        {
+          "id": "taxa-conclusao-no-prazo",
+          "name": "Taxa de conclusão no prazo (%)",
+          "periodicity": "mensal"
+        },
+        {
+          "id": "taxa-retrabalho",
+          "name": "Taxa de retrabalho (%)",
+          "periodicity": "mensal"
+        },
+        {
+          "id": "tempestividade-fechamento-contabil",
+          "name": "Tempestividade de fechamento contábil (%)",
+          "periodicity": "mensal"
+        }
+      ],
+      "indicatorsCount": 4
+    },
+    {
+      "sigla": "SUGEF",
+      "nome": "Subsecretaria de Gestão Fiscal",
+      "governanceParticipants": {
+        "reviewerUserId": "sugef.revisor@tesouro.gov.br",
+        "approverUserId": "sugef.subsecretario@tesouro.gov.br"
+      },
+      "governanceCoverage": {
+        "reviewerMapped": true,
+        "approverMapped": true
+      },
+      "indicators": [
+        {
+          "id": "prazo-medio-conclusao-dias",
+          "name": "Prazo médio de conclusão (dias)",
+          "periodicity": "mensal"
+        },
+        {
+          "id": "taxa-conclusao-no-prazo",
+          "name": "Taxa de conclusão no prazo (%)",
+          "periodicity": "mensal"
+        },
+        {
+          "id": "taxa-retrabalho",
+          "name": "Taxa de retrabalho (%)",
+          "periodicity": "mensal"
+        },
+        {
+          "id": "cobertura-alertas-fiscais",
+          "name": "Cobertura de alertas fiscais tratados (%)",
+          "periodicity": "mensal"
+        }
+      ],
+      "indicatorsCount": 4
+    }
+  ],
+  "warnings": [],
+  "importReadiness": {
+    "templateDir": "C:\\Users\\carso\\OneDrive - Tesouro Nacional\\Documentos\\_paperclip_PublicSector\\report\\stn\\template-stn-company-pilot",
+    "expectedFiles": 67,
+    "missingFiles": [],
+    "status": "ready"
+  }
+}

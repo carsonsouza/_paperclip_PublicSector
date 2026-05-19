@@ -1,0 +1,37 @@
+{
+  "source": "homologacao_inicial_fase3",
+  "users": [
+    {
+      "userId": "stn.revisor@tesouro.gov.br",
+      "displayName": "Revisor STN"
+    },
+    {
+      "userId": "stn.aprovador@tesouro.gov.br",
+      "displayName": "Aprovador STN"
+    },
+    {
+      "userId": "sugef.revisor@tesouro.gov.br",
+      "displayName": "Revisor SUGEF"
+    },
+    {
+      "userId": "sugef.subsecretario@tesouro.gov.br",
+      "displayName": "Subsecretário SUGEF"
+    },
+    {
+      "userId": "suafi.revisor@tesouro.gov.br",
+      "displayName": "Revisor SUAFI"
+    },
+    {
+      "userId": "suafi.subsecretario@tesouro.gov.br",
+      "displayName": "Subsecretário SUAFI"
+    },
+    {
+      "userId": "sucon.revisor@tesouro.gov.br",
+      "displayName": "Revisor SUCON"
+    },
+    {
+      "userId": "sucon.subsecretario@tesouro.gov.br",
+      "displayName": "Subsecretário SUCON"
+    }
+  ]
+}

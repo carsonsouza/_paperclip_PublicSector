@@ -51,7 +51,8 @@
     "perf:issue-chat-long-thread": "node scripts/measure-issue-chat-long-thread.mjs",
     "stn:extract-regimento": "node scripts/extract-stn-regimento.mjs",
     "stn:generate-template": "node scripts/generate-stn-company-template.mjs",
-    "stn:generate-template:pilot": "node scripts/generate-stn-company-template.mjs --pilot-siglas SUGEF,SUAFI,SUCON"
+    "stn:generate-template:pilot": "node scripts/generate-stn-company-template.mjs --pilot-siglas SUGEF,SUAFI,SUCON",
+    "stn:validate-operacao-assistida": "node scripts/validate-stn-operacao-assistida.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
