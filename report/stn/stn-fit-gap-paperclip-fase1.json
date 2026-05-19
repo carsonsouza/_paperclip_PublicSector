@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "stn-fit-gap-paperclip/v1",
+  "generatedAt": "2026-05-19T14:30:00.000Z",
+  "source": {
+    "stnStructureFile": "report/stn/stn-estrutura-competencias-20260415.json",
+    "stnRegimentoFile": "20260415 relatorio-dinamico-estrutura-viva.html"
+  },
+  "fase": "fase1-operacional",
+  "objetivo": "Adaptar o Paperclip para operar em contexto organizacional da STN sem redesign visual nesta fase.",
+  "reusoDiretoPaperclip": [
+    {
+      "dominio": "estrutura_organizacional",
+      "entidades": [
+        "companies",
+        "agents"
+      ],
+      "como_reusar": "Mapear unidade organizacional STN para agent com reportsTo, title e metadata institucional."
+    },
+    {
+      "dominio": "planejamento_e_execucao",
+      "entidades": [
+        "goals",
+        "projects",
+        "issues"
+      ],
+      "como_reusar": "Mapear competencias para goals/projetos e desdobrar trabalho em issues com assignee por unidade."
+    },
+    {
+      "dominio": "governanca",
+      "entidades": [
+        "approvals",
+        "issue_approvals"
+      ],
+      "como_reusar": "Criar gates de aprovacao por tipo de ato (normativo, operacional, fiscal) vinculados a issue."
+    },
+    {
+      "dominio": "auditoria",
+      "entidades": [
+        "activity_log",
+        "heartbeat_run_events"
+      ],
+      "como_reusar": "Registrar trilha de decisao, execucao e aprovacao com rastreabilidade por entidade."
+    },
+    {
+      "dominio": "portabilidade",
+      "entidades": [
+        "company-portability manifest",
+        "AGENTS.md/COMPANY.md package model"
+      ],
+      "como_reusar": "Empacotar baseline STN em company template importavel."
+    }
+  ],
+  "gapsFase1": [
+    {
+      "id": "gap-001",
+      "tema": "competencias_como_objeto_de_dominio",
+      "situacaoAtual": "Nao existe tabela/objeto de competencia institucional com referencia normativa.",
+      "impacto": "Dificulta governanca por competencia e monitoramento por base legal.",
+      "acaoFase1": "Introduzir competencia em metadata estruturada (goal/project/issue) com chave padrao."
+    },
+    {
+      "id": "gap-002",
+      "tema": "hierarquia_formal_de_unidades",
+      "situacaoAtual": "Agents suportam reportsTo, mas sem taxonomia publica explicita de tipo de unidade.",
+      "impacto": "Perde semantica organizacional (subsecretaria, coordenacao-geral, gerencia, nucleo).",
+      "acaoFase1": "Padronizar metadata.publicSector.unitType e metadata.publicSector.unitCode por agent."
+    },
+    {
+      "id": "gap-003",
+      "tema": "roles_publicos",
+      "situacaoAtual": "AGENT_ROLES e enumerado corporativo e nao cobre papeis administrativos publicos.",
+      "impacto": "Rotulagem funcional fica pouco aderente ao setor publico.",
+      "acaoFase1": "Manter role=general para compatibilidade e mover papel institucional para metadata."
+    },
+    {
+      "id": "gap-004",
+      "tema": "segregacao_de_funcoes",
+      "situacaoAtual": "Approvals existem, mas sem modelo padrao de segregacao por natureza de ato.",
+      "impacto": "Risco de fluxo sem gate adequado para contexto fiscal/contabil.",
+      "acaoFase1": "Criar matriz de aprovacao minima por tipo de issue usando approvals e issue_approvals."
+    },
+    {
+      "id": "gap-005",
+      "tema": "referencia_normativa",
+      "situacaoAtual": "Issues e goals nao carregam referencias normativas padronizadas.",
+      "impacto": "Dificulta auditoria ex-post e justificativa legal de decisoes.",
+      "acaoFase1": "Adicionar metadata.regulatoryRefs em issues/goals com origem no regimento STN."
+    }
+  ],
+  "decisoesArquiteturaisFase1": [
+    "Sem mudancas de schema DB no primeiro ciclo; usar metadata estruturada para acelerar entrega.",
+    "Persistir estrutura STN em artefato versionado e idempotente para seed.",
+    "Focar no fluxo competencia->issue->aprovacao->execucao->auditoria antes de ampliar superficies de UI."
+  ],
+  "mapeamentoOperacionalMinimo": {
+    "unitToAgent": {
+      "regra": "Cada unidade STN vira 1 agent institucional com reportsTo inferido da hierarquia."
+    },
+    "competenciaToGoal": {
+      "regra": "Competencia (code + texto) vira goal ou subgoal conforme granularidade."
+    },
+    "goalToIssue": {
+      "regra": "Issue operacional referencia metadata.competencyRef = { unitSigla, code }."
+    },
+    "issueToApproval": {
+      "regra": "Issues de classes sensiveis exigem approval pendente antes de conclusao."
+    }
+  },
+  "criteriosAceiteFase1": [
+    "Estrutura STN carregavel em formato estruturado e versionado.",
+    "Pelo menos 1 fluxo ponta-a-ponta com referencia de competencia e aprovacao.",
+    "Trilha de auditoria visivel para criacao, aprovacao e conclusao do fluxo piloto.",
+    "Sem quebra de compatibilidade com company portability existente."
+  ]
+}
