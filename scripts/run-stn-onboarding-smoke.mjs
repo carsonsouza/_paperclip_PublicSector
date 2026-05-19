@@ -106,6 +106,8 @@ export function buildOnboardingExecutionReport({
   previewRoute,
   applyRoute,
   requestBody,
+  requestEffectivePath,
+  requestEffectiveRawContent,
   previewSummary,
   previewResult,
   applyResult,
@@ -133,6 +135,7 @@ export function buildOnboardingExecutionReport({
       collisionStrategy: requestBody?.collisionStrategy ?? null,
       include: requestBody?.include ?? null,
       agents: requestBody?.agents ?? null,
+      effectiveRequestFile: requestEffectivePath ?? null,
     },
     fingerprints: {
       requestSha256: hashJson(requestBody ?? {}),
@@ -141,6 +144,7 @@ export function buildOnboardingExecutionReport({
       applyResultSha256: applyExecuted ? hashJson(applyResult ?? {}) : null,
     },
     artifacts: {
+      requestEffective: buildArtifactMetadata(requestEffectivePath, requestEffectiveRawContent),
       previewResult: buildArtifactMetadata(previewPath, previewRawContent),
       previewSummary: buildArtifactMetadata(previewSummaryPath, previewSummaryRawContent),
       applyResult: applyExecuted ? buildArtifactMetadata(applyPath, applyRawContent) : null,
@@ -275,6 +279,10 @@ async function main() {
     targetCompanyId: args.targetCompanyId,
     collisionStrategy: args.collisionStrategy,
   });
+  await mkdir(args.outputDir, { recursive: true });
+  const requestEffectivePath = path.join(args.outputDir, "stn-import-request-effective.json");
+  const requestEffectiveRawContent = `${JSON.stringify(requestBody, null, 2)}\n`;
+  await writeFile(requestEffectivePath, requestEffectiveRawContent, "utf8");
   const targetMode = requestBody?.target?.mode ?? "new_company";
   const targetCompanyId = requestBody?.target?.companyId ?? null;
   const previewRoute = resolvePreviewRoute(targetMode, targetCompanyId);
@@ -282,7 +290,6 @@ async function main() {
   const authHeaders = buildAuthHeaders(args);
 
   const previewResult = await postJson(args.apiBase, previewRoute, requestBody, authHeaders);
-  await mkdir(args.outputDir, { recursive: true });
   const previewPath = path.join(args.outputDir, "stn-import-preview-result.json");
   const previewRawContent = `${JSON.stringify(previewResult, null, 2)}\n`;
   await writeFile(previewPath, previewRawContent, "utf8");
@@ -317,6 +324,8 @@ async function main() {
     previewRoute,
     applyRoute,
     requestBody,
+    requestEffectivePath,
+    requestEffectiveRawContent,
     previewSummary,
     previewResult,
     applyResult,
@@ -332,6 +341,7 @@ async function main() {
   await writeFile(executionReportPath, `${JSON.stringify(executionReport, null, 2)}\n`, "utf8");
 
   process.stdout.write([
+    `Request efetivo salvo em: ${requestEffectivePath}`,
     `Preview salvo em: ${previewPath}`,
     `Resumo do preview salvo em: ${previewSummaryPath}`,
     `Relatório de execução salvo em: ${executionReportPath}`,

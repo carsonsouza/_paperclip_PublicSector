@@ -110,6 +110,8 @@ test("buildOnboardingExecutionReport returns consolidated execution metadata", (
     previewRoute: "/api/companies/company-123/imports/preview",
     applyRoute: "/api/companies/company-123/imports/apply",
     requestBody,
+    requestEffectivePath: "report/stn/stn-import-request-effective.json",
+    requestEffectiveRawContent: "{\n  \"collisionStrategy\": \"rename\"\n}\n",
     previewResult,
     previewSummary,
     applyResult,
@@ -131,11 +133,14 @@ test("buildOnboardingExecutionReport returns consolidated execution metadata", (
   assert.equal(report.routes.apply, "/api/companies/company-123/imports/apply");
   assert.equal(report.request.target.mode, "existing_company");
   assert.equal(report.request.collisionStrategy, "rename");
+  assert.equal(report.request.effectiveRequestFile, "report/stn/stn-import-request-effective.json");
   assert.equal(report.fingerprints.requestSha256, hashJson(requestBody));
   assert.equal(report.fingerprints.previewResultSha256, hashJson(previewResult));
   assert.equal(report.fingerprints.previewSummarySha256, hashJson(previewSummary));
   assert.equal(report.fingerprints.applyResultSha256, hashJson(applyResult));
   assert.equal(report.artifacts.previewResult.sha256, hashText("{\n  \"ok\": true\n}\n"));
+  assert.equal(report.artifacts.requestEffective.file, "report/stn/stn-import-request-effective.json");
+  assert.equal(report.artifacts.requestEffective.sha256, hashText("{\n  \"collisionStrategy\": \"rename\"\n}\n"));
   assert.equal(report.artifacts.previewSummary.sizeBytes, Buffer.byteLength("{\n  \"warnings\": 1\n}\n", "utf8"));
   assert.equal(report.artifacts.applyResult.file, "report/stn/stn-import-apply-result.json");
   assert.equal(report.artifacts.executionReport.file, "report/stn/stn-onboarding-execution-report.json");
@@ -153,6 +158,8 @@ test("buildOnboardingExecutionReport sets null apply hash when apply not execute
     previewRoute: "/api/companies/import/preview",
     applyRoute: "/api/companies/import",
     requestBody: { target: { mode: "new_company", newCompanyName: "STN" } },
+    requestEffectivePath: "request.json",
+    requestEffectiveRawContent: "{}\n",
     previewResult: { warnings: [] },
     previewSummary: { warnings: 0, errors: 0, collisions: 0 },
     applyResult: null,
