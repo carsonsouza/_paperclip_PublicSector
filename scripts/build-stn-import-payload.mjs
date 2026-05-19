@@ -8,6 +8,7 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 
 const DEFAULT_TEMPLATE_DIR = path.join(REPO_ROOT, "report", "stn", "template-stn-company-pilot");
 const DEFAULT_OUTPUT = path.join(REPO_ROOT, "report", "stn", "stn-import-payload-pilot.json");
+const DEFAULT_REQUEST_OUTPUT = path.join(REPO_ROOT, "report", "stn", "stn-import-request-pilot.json");
 const DEFAULT_INCLUDE = {
   company: true,
   agents: true,
@@ -87,10 +88,15 @@ export function buildImportPayload({ rootPath, files, target, include }) {
   };
 }
 
+export function buildImportRequest(result) {
+  return result.payload;
+}
+
 function parseArgs(argv) {
   const options = {
     templateDir: DEFAULT_TEMPLATE_DIR,
     output: DEFAULT_OUTPUT,
+    requestOutput: DEFAULT_REQUEST_OUTPUT,
     targetMode: "new_company",
     targetCompanyId: null,
     newCompanyName: DEFAULT_TARGET.newCompanyName,
@@ -106,6 +112,11 @@ function parseArgs(argv) {
     }
     if (arg === "--output" && argv[i + 1]) {
       options.output = path.resolve(argv[i + 1]);
+      i += 1;
+      continue;
+    }
+    if (arg === "--request-output" && argv[i + 1]) {
+      options.requestOutput = path.resolve(argv[i + 1]);
       i += 1;
       continue;
     }
@@ -142,6 +153,7 @@ function printHelp() {
     "Options:",
     "  --template-dir <path>",
     "  --output <path>",
+    "  --request-output <path>",
     "  --target <new|existing>",
     "  --target-company-id <id>",
     "  --new-company-name <name>",
@@ -149,6 +161,7 @@ function printHelp() {
     `Defaults:`,
     `  template-dir: ${DEFAULT_TEMPLATE_DIR}`,
     `  output:       ${DEFAULT_OUTPUT}`,
+    `  request:      ${DEFAULT_REQUEST_OUTPUT}`,
     `  target:       new`,
     "",
   ].join("\n"));
@@ -187,11 +200,15 @@ async function main() {
     target,
     include: DEFAULT_INCLUDE,
   });
+  const requestPayload = buildImportRequest(result);
   await mkdir(path.dirname(args.output), { recursive: true });
+  await mkdir(path.dirname(args.requestOutput), { recursive: true });
   await writeFile(args.output, `${JSON.stringify(result, null, 2)}\n`, "utf8");
+  await writeFile(args.requestOutput, `${JSON.stringify(requestPayload, null, 2)}\n`, "utf8");
 
   process.stdout.write([
     `Payload gerado em: ${args.output}`,
+    `Request gerado em: ${args.requestOutput}`,
     `Status: ${result.summary.status}`,
     `Files: ${result.summary.files} | Agents: ${result.summary.agents} | Projects: ${result.summary.projects} | Tasks: ${result.summary.tasks}`,
     "",
