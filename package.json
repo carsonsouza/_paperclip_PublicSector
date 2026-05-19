@@ -55,6 +55,9 @@
     "stn:validate-operacao-assistida": "node scripts/validate-stn-operacao-assistida.mjs",
     "stn:build-import-payload": "node scripts/build-stn-import-payload.mjs",
     "stn:import-dry-run": "node scripts/run-stn-import-dry-run.mjs",
+    "stn:import-apply": "node scripts/run-stn-import-apply.mjs",
+    "stn:onboarding:preview": "npm run stn:build-import-payload && npm run stn:import-dry-run",
+    "stn:onboarding:apply": "npm run stn:build-import-payload && npm run stn:import-apply -- --yes",
     "stn:pipeline": "node scripts/extract-stn-regimento.mjs && node scripts/generate-stn-company-template.mjs --pilot-siglas SUGEF,SUAFI,SUCON && node scripts/validate-stn-operacao-assistida.mjs && node scripts/build-stn-import-payload.mjs",
     "stn:pipeline:deterministic": "cross-env STN_GENERATED_AT=2026-01-01T00:00:00.000Z npm run stn:pipeline"
   },
