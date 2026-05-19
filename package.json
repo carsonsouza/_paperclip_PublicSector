@@ -57,6 +57,7 @@
     "stn:import-curl": "node scripts/generate-stn-import-curl.mjs",
     "stn:import-dry-run": "node scripts/run-stn-import-dry-run.mjs",
     "stn:import-apply": "node scripts/run-stn-import-apply.mjs",
+    "stn:onboarding:smoke": "node scripts/run-stn-onboarding-smoke.mjs",
     "stn:onboarding:curl": "npm run stn:build-import-payload && npm run stn:import-curl",
     "stn:onboarding:preview": "npm run stn:build-import-payload && npm run stn:import-dry-run",
     "stn:onboarding:apply": "npm run stn:build-import-payload && npm run stn:import-apply -- --yes",
