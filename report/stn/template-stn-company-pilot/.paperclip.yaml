@@ -1,0 +1,75 @@
+company:
+  requireBoardApprovalForNewAgents: true
+tasks:
+  plano-competencias-suafi:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "SUAFI"
+        unitNome: "Subsecretaria de Administração Financeira Federal"
+        competencyRef: "SUAFI:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-sucon:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "SUCON"
+        unitNome: "Subsecretaria de Contabilidade Pública"
+        competencyRef: "SUCON:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"
+  plano-competencias-sugef:
+    priority: "high"
+    executionPolicy:
+      mode: "normal"
+      commentRequired: true
+      stages:
+        - type: "review"
+          approvalsNeeded: 1
+          participants:
+            - type: "agent"
+              agentId: "00000000-0000-4000-8000-000000000001"
+        - type: "approval"
+          approvalsNeeded: 1
+          participants:
+            - type: "user"
+              userId: "board-user"
+    metadata:
+      publicSector:
+        unitSigla: "SUGEF"
+        unitNome: "Subsecretaria de Gestão Fiscal"
+        competencyRef: "SUGEF:I"
+        governanceClass: "ato_critico"
+        auditTrailRequired: true
+        source: "regimento_stn_20260415"

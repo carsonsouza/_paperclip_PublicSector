@@ -8,6 +8,7 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 
 const DEFAULT_INPUT = path.join(REPO_ROOT, "report", "stn", "stn-estrutura-competencias-20260415.json");
 const DEFAULT_OUTPUT_DIR = path.join(REPO_ROOT, "report", "stn", "template-stn-company");
+const DEFAULT_PILOT_OUTPUT_DIR = path.join(REPO_ROOT, "report", "stn", "template-stn-company-pilot");
 
 function quoteYamlString(value) {
   return JSON.stringify(value);
@@ -115,9 +116,61 @@ function summarizeCompetencies(unit) {
   return bullets.join("\n");
 }
 
-export function generateTemplateFiles(structure) {
+function normalizeSigla(value) {
+  return String(value ?? "").trim().toUpperCase();
+}
+
+function selectUnitsForPilot(units, pilotSiglas) {
+  if (!Array.isArray(pilotSiglas) || pilotSiglas.length === 0) return units;
+  const bySigla = new Map(
+    units
+      .filter((unit) => typeof unit?.sigla === "string" && unit.sigla.trim().length > 0)
+      .map((unit) => [normalizeSigla(unit.sigla), unit]),
+  );
+  const childrenByParent = new Map();
+  for (const unit of units) {
+    const parent = normalizeSigla(unit.parentSigla);
+    if (!parent) continue;
+    const children = childrenByParent.get(parent) ?? [];
+    children.push(unit);
+    childrenByParent.set(parent, children);
+  }
+
+  const selected = new Set();
+  const addWithAncestors = (sigla) => {
+    let current = bySigla.get(sigla) ?? null;
+    while (current) {
+      const currentSigla = normalizeSigla(current.sigla);
+      if (!currentSigla || selected.has(currentSigla)) break;
+      selected.add(currentSigla);
+      current = bySigla.get(normalizeSigla(current.parentSigla)) ?? null;
+    }
+  };
+  const addDescendants = (sigla) => {
+    const queue = [sigla];
+    const visited = new Set();
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current || visited.has(current)) continue;
+      visited.add(current);
+      selected.add(current);
+      const children = childrenByParent.get(current) ?? [];
+      for (const child of children) queue.push(normalizeSigla(child.sigla));
+    }
+  };
+
+  if (bySigla.has("STN")) selected.add("STN");
+  const requested = pilotSiglas.map(normalizeSigla).filter((entry) => bySigla.has(entry));
+  for (const sigla of requested) addWithAncestors(sigla);
+  for (const sigla of requested) addDescendants(sigla);
+
+  return units.filter((unit) => selected.has(normalizeSigla(unit.sigla)));
+}
+
+export function generateTemplateFiles(structure, options = {}) {
   const files = {};
-  const units = Array.isArray(structure.units) ? structure.units : [];
+  const allUnits = Array.isArray(structure.units) ? structure.units : [];
+  const units = selectUnitsForPilot(allUnits, options.pilotSiglas ?? null);
   const bySigla = new Map(units.map((unit) => [unit.sigla, unit]));
   const slugBySigla = new Map(units.map((unit) => [unit.sigla, unitSlug(unit)]));
 
@@ -249,6 +302,8 @@ function parseArgs(argv) {
   const options = {
     input: DEFAULT_INPUT,
     outputDir: DEFAULT_OUTPUT_DIR,
+    pilotSiglas: [],
+    outputDirProvided: false,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -260,12 +315,25 @@ function parseArgs(argv) {
     }
     if (arg === "--output-dir" && argv[i + 1]) {
       options.outputDir = path.resolve(argv[i + 1]);
+      options.outputDirProvided = true;
+      i += 1;
+      continue;
+    }
+    if (arg === "--pilot-siglas" && argv[i + 1]) {
+      options.pilotSiglas = argv[i + 1]
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0);
       i += 1;
       continue;
     }
     if (arg === "--help" || arg === "-h") {
       return { help: true, ...options };
     }
+  }
+
+  if (options.pilotSiglas.length > 0 && !options.outputDirProvided) {
+    options.outputDir = DEFAULT_PILOT_OUTPUT_DIR;
   }
 
   return { help: false, ...options };
@@ -275,9 +343,11 @@ function printHelp() {
   process.stdout.write(
     [
       "Usage: node scripts/generate-stn-company-template.mjs [--input <json>] [--output-dir <dir>]",
+      "       node scripts/generate-stn-company-template.mjs --pilot-siglas SUGEF,SUAFI,SUCON",
       "",
       `Default input:      ${DEFAULT_INPUT}`,
       `Default output dir: ${DEFAULT_OUTPUT_DIR}`,
+      `Pilot output dir:   ${DEFAULT_PILOT_OUTPUT_DIR}`,
       "",
     ].join("\n"),
   );
@@ -292,7 +362,7 @@ async function main() {
 
   const raw = await readFile(args.input, "utf8");
   const structure = JSON.parse(raw);
-  const files = generateTemplateFiles(structure);
+  const files = generateTemplateFiles(structure, { pilotSiglas: args.pilotSiglas });
   await writeFiles(args.outputDir, files);
 
   const agentFiles = Object.keys(files).filter((entry) => entry.endsWith("/AGENTS.md")).length;
