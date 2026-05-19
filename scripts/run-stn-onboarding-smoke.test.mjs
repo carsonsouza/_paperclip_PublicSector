@@ -5,7 +5,9 @@ import {
   assertApplyAllowed,
   buildOnboardingExecutionReport,
   buildRequestBodyForTarget,
+  buildArtifactMetadata,
   hashJson,
+  hashText,
   requireApplyConfirmation,
   summarizePreviewPlan,
 } from "./run-stn-onboarding-smoke.mjs";
@@ -101,6 +103,9 @@ test("buildOnboardingExecutionReport returns consolidated execution metadata", (
   const previewSummary = { warnings: 1, errors: 0, collisions: 2 };
   const applyResult = { company: { id: "company-123", action: "updated" } };
   const report = buildOnboardingExecutionReport({
+    startedAt: "2026-01-01T00:00:00.000Z",
+    completedAt: "2026-01-01T00:00:05.000Z",
+    durationMs: 5000,
     apiBase: "http://127.0.0.1:3000",
     previewRoute: "/api/companies/company-123/imports/preview",
     applyRoute: "/api/companies/company-123/imports/apply",
@@ -110,11 +115,18 @@ test("buildOnboardingExecutionReport returns consolidated execution metadata", (
     applyResult,
     previewPath: "report/stn/stn-import-preview-result.json",
     previewSummaryPath: "report/stn/stn-import-preview-summary.json",
+    previewRawContent: "{\n  \"ok\": true\n}\n",
+    previewSummaryRawContent: "{\n  \"warnings\": 1\n}\n",
     applyPath: "report/stn/stn-import-apply-result.json",
+    applyRawContent: "{\n  \"applied\": true\n}\n",
+    executionReportPath: "report/stn/stn-onboarding-execution-report.json",
     applyExecuted: true,
   });
 
   assert.equal(report.apiBase, "http://127.0.0.1:3000");
+  assert.equal(report.startedAt, "2026-01-01T00:00:00.000Z");
+  assert.equal(report.completedAt, "2026-01-01T00:00:05.000Z");
+  assert.equal(report.durationMs, 5000);
   assert.equal(report.routes.preview, "/api/companies/company-123/imports/preview");
   assert.equal(report.routes.apply, "/api/companies/company-123/imports/apply");
   assert.equal(report.request.target.mode, "existing_company");
@@ -123,6 +135,10 @@ test("buildOnboardingExecutionReport returns consolidated execution metadata", (
   assert.equal(report.fingerprints.previewResultSha256, hashJson(previewResult));
   assert.equal(report.fingerprints.previewSummarySha256, hashJson(previewSummary));
   assert.equal(report.fingerprints.applyResultSha256, hashJson(applyResult));
+  assert.equal(report.artifacts.previewResult.sha256, hashText("{\n  \"ok\": true\n}\n"));
+  assert.equal(report.artifacts.previewSummary.sizeBytes, Buffer.byteLength("{\n  \"warnings\": 1\n}\n", "utf8"));
+  assert.equal(report.artifacts.applyResult.file, "report/stn/stn-import-apply-result.json");
+  assert.equal(report.artifacts.executionReport.file, "report/stn/stn-onboarding-execution-report.json");
   assert.equal(report.preview.summary.collisions, 2);
   assert.equal(report.apply.executed, true);
   assert.equal(report.apply.outputFile, "report/stn/stn-import-apply-result.json");
@@ -130,6 +146,9 @@ test("buildOnboardingExecutionReport returns consolidated execution metadata", (
 
 test("buildOnboardingExecutionReport sets null apply hash when apply not executed", () => {
   const report = buildOnboardingExecutionReport({
+    startedAt: "2026-01-01T00:00:00.000Z",
+    completedAt: "2026-01-01T00:00:02.000Z",
+    durationMs: 2000,
     apiBase: "http://127.0.0.1:3000",
     previewRoute: "/api/companies/import/preview",
     applyRoute: "/api/companies/import",
@@ -139,8 +158,25 @@ test("buildOnboardingExecutionReport sets null apply hash when apply not execute
     applyResult: null,
     previewPath: "preview.json",
     previewSummaryPath: "summary.json",
+    previewRawContent: "{}\n",
+    previewSummaryRawContent: "{}\n",
     applyPath: null,
+    applyRawContent: null,
+    executionReportPath: "execution.json",
     applyExecuted: false,
   });
   assert.equal(report.fingerprints.applyResultSha256, null);
+  assert.equal(report.artifacts.applyResult, null);
+});
+
+test("buildArtifactMetadata returns null for absent file path", () => {
+  assert.equal(buildArtifactMetadata(null, "{}"), null);
+});
+
+test("buildArtifactMetadata computes file metadata", () => {
+  const content = "{\n  \"ok\": true\n}\n";
+  const artifact = buildArtifactMetadata("report.json", content);
+  assert.equal(artifact.file, "report.json");
+  assert.equal(artifact.sizeBytes, Buffer.byteLength(content, "utf8"));
+  assert.equal(artifact.sha256, hashText(content));
 });

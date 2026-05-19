@@ -82,7 +82,26 @@ export function hashJson(value) {
     .digest("hex");
 }
 
+export function hashText(value) {
+  return createHash("sha256")
+    .update(value, "utf8")
+    .digest("hex");
+}
+
+export function buildArtifactMetadata(filePath, content) {
+  if (filePath === null || filePath === undefined) return null;
+  const normalizedContent = String(content ?? "");
+  return {
+    file: filePath,
+    sizeBytes: Buffer.byteLength(normalizedContent, "utf8"),
+    sha256: hashText(normalizedContent),
+  };
+}
+
 export function buildOnboardingExecutionReport({
+  startedAt,
+  completedAt,
+  durationMs,
   apiBase,
   previewRoute,
   applyRoute,
@@ -92,11 +111,18 @@ export function buildOnboardingExecutionReport({
   applyResult,
   previewPath,
   previewSummaryPath,
+  previewRawContent,
+  previewSummaryRawContent,
   applyPath,
+  applyRawContent,
+  executionReportPath,
   applyExecuted,
 }) {
   return {
     generatedAt: process.env.STN_GENERATED_AT ?? new Date().toISOString(),
+    startedAt,
+    completedAt,
+    durationMs,
     apiBase,
     routes: {
       preview: previewRoute,
@@ -113,6 +139,16 @@ export function buildOnboardingExecutionReport({
       previewResultSha256: hashJson(previewResult ?? {}),
       previewSummarySha256: hashJson(previewSummary ?? {}),
       applyResultSha256: applyExecuted ? hashJson(applyResult ?? {}) : null,
+    },
+    artifacts: {
+      previewResult: buildArtifactMetadata(previewPath, previewRawContent),
+      previewSummary: buildArtifactMetadata(previewSummaryPath, previewSummaryRawContent),
+      applyResult: applyExecuted ? buildArtifactMetadata(applyPath, applyRawContent) : null,
+      executionReport: executionReportPath
+        ? {
+          file: executionReportPath,
+        }
+        : null,
     },
     preview: {
       outputFile: previewPath,
@@ -227,6 +263,8 @@ function printHelp() {
 }
 
 async function main() {
+  const startedAtIso = process.env.STN_GENERATED_AT ?? new Date().toISOString();
+  const startEpochMs = Date.now();
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
     printHelp();
@@ -246,10 +284,12 @@ async function main() {
   const previewResult = await postJson(args.apiBase, previewRoute, requestBody, authHeaders);
   await mkdir(args.outputDir, { recursive: true });
   const previewPath = path.join(args.outputDir, "stn-import-preview-result.json");
-  await writeFile(previewPath, `${JSON.stringify(previewResult, null, 2)}\n`, "utf8");
+  const previewRawContent = `${JSON.stringify(previewResult, null, 2)}\n`;
+  await writeFile(previewPath, previewRawContent, "utf8");
   const previewSummary = summarizePreviewPlan(previewResult);
   const previewSummaryPath = path.join(args.outputDir, "stn-import-preview-summary.json");
-  await writeFile(previewSummaryPath, `${JSON.stringify(previewSummary, null, 2)}\n`, "utf8");
+  const previewSummaryRawContent = `${JSON.stringify(previewSummary, null, 2)}\n`;
+  await writeFile(previewSummaryPath, previewSummaryRawContent, "utf8");
   assertApplyAllowed({
     apply: args.apply,
     yes: args.yes,
@@ -259,12 +299,20 @@ async function main() {
 
   let applyPath = null;
   let applyResult = null;
+  let applyRawContent = null;
   if (args.apply) {
     applyResult = await postJson(args.apiBase, applyRoute, requestBody, authHeaders);
     applyPath = path.join(args.outputDir, "stn-import-apply-result.json");
-    await writeFile(applyPath, `${JSON.stringify(applyResult, null, 2)}\n`, "utf8");
+    applyRawContent = `${JSON.stringify(applyResult, null, 2)}\n`;
+    await writeFile(applyPath, applyRawContent, "utf8");
   }
+  const completedAtIso = process.env.STN_GENERATED_AT ?? new Date().toISOString();
+  const durationMs = Math.max(0, Date.now() - startEpochMs);
+  const executionReportPath = path.join(args.outputDir, "stn-onboarding-execution-report.json");
   const executionReport = buildOnboardingExecutionReport({
+    startedAt: startedAtIso,
+    completedAt: completedAtIso,
+    durationMs,
     apiBase: args.apiBase,
     previewRoute,
     applyRoute,
@@ -274,10 +322,13 @@ async function main() {
     applyResult,
     previewPath,
     previewSummaryPath,
+    previewRawContent,
+    previewSummaryRawContent,
     applyPath,
+    applyRawContent,
+    executionReportPath,
     applyExecuted: args.apply,
   });
-  const executionReportPath = path.join(args.outputDir, "stn-onboarding-execution-report.json");
   await writeFile(executionReportPath, `${JSON.stringify(executionReport, null, 2)}\n`, "utf8");
 
   process.stdout.write([
