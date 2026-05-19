@@ -45,6 +45,8 @@ test("generateTemplateFiles creates company, agent, project, and task templates"
   assert.match(files["agents/stn/AGENTS.md"], /name: "STN"/);
   assert.match(files[".paperclip.yaml"], /executionPolicy:/);
   assert.match(files[".paperclip.yaml"], /competencyRef:/);
+  assert.match(files[".paperclip.yaml"], /operationalIndicators:/);
+  assert.doesNotMatch(files[".paperclip.yaml"], /board-user/);
 });
 
 test("generateTemplateFiles can generate a pilot subset preserving hierarchy", () => {
@@ -91,4 +93,81 @@ test("generateTemplateFiles can generate a pilot subset preserving hierarchy", (
   assert.equal(files["projects/operacao-suafi/PROJECT.md"], undefined);
   assert.match(files[".paperclip.yaml"], /plano-competencias-sugef:/);
   assert.doesNotMatch(files[".paperclip.yaml"], /plano-competencias-suafi:/);
+});
+
+test("generateTemplateFiles applies approval map per unidade", () => {
+  const structure = {
+    units: [
+      {
+        nome: "Secretaria do Tesouro Nacional",
+        sigla: "STN",
+        level: 1,
+        parentSigla: null,
+        competencias: [{ code: "I", text: "Competencia STN." }],
+      },
+      {
+        nome: "Subsecretaria de Gestão Fiscal",
+        sigla: "SUGEF",
+        level: 2,
+        parentSigla: "STN",
+        competencias: [{ code: "I", text: "Competencia SUGEF." }],
+      },
+    ],
+  };
+
+  const files = generateTemplateFiles(structure, {
+    approvalMap: {
+      global: {
+        reviewerUserId: "global.revisor@tesouro.gov.br",
+        approverUserId: "global.aprovador@tesouro.gov.br",
+      },
+      units: {
+        SUGEF: {
+          reviewerUserId: "sugef.revisor@tesouro.gov.br",
+          approverUserId: "sugef.aprovador@tesouro.gov.br",
+        },
+      },
+    },
+  });
+
+  assert.match(files[".paperclip.yaml"], /sugef\.revisor@tesouro\.gov\.br/);
+  assert.match(files[".paperclip.yaml"], /sugef\.aprovador@tesouro\.gov\.br/);
+  assert.doesNotMatch(files[".paperclip.yaml"], /global\.revisor@tesouro\.gov\.br/);
+});
+
+test("generateTemplateFiles applies operational indicators map", () => {
+  const structure = {
+    units: [
+      {
+        nome: "Secretaria do Tesouro Nacional",
+        sigla: "STN",
+        level: 1,
+        parentSigla: null,
+        competencias: [{ code: "I", text: "Competencia STN." }],
+      },
+      {
+        nome: "Subsecretaria de Gestão Fiscal",
+        sigla: "SUGEF",
+        level: 2,
+        parentSigla: "STN",
+        competencias: [{ code: "I", text: "Competencia SUGEF." }],
+      },
+    ],
+  };
+
+  const files = generateTemplateFiles(structure, {
+    indicatorsMap: {
+      global: [
+        { id: "global-kpi", name: "Global KPI", periodicity: "mensal", formula: "x/y" },
+      ],
+      units: {
+        SUGEF: [
+          { id: "sugef-kpi", name: "SUGEF KPI", periodicity: "mensal", formula: "a/b" },
+        ],
+      },
+    },
+  });
+
+  assert.match(files[".paperclip.yaml"], /global-kpi/);
+  assert.match(files[".paperclip.yaml"], /sugef-kpi/);
 });

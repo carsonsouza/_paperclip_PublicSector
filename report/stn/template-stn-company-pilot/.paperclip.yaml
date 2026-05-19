@@ -10,13 +10,13 @@ tasks:
         - type: "review"
           approvalsNeeded: 1
           participants:
-            - type: "agent"
-              agentId: "00000000-0000-4000-8000-000000000001"
+            - type: "user"
+              userId: "suafi.revisor@tesouro.gov.br"
         - type: "approval"
           approvalsNeeded: 1
           participants:
             - type: "user"
-              userId: "board-user"
+              userId: "suafi.subsecretario@tesouro.gov.br"
     metadata:
       publicSector:
         unitSigla: "SUAFI"
@@ -25,6 +25,26 @@ tasks:
         governanceClass: "ato_critico"
         auditTrailRequired: true
         source: "regimento_stn_20260415"
+        governanceParticipants:
+          reviewerUserId: "suafi.revisor@tesouro.gov.br"
+          approverUserId: "suafi.subsecretario@tesouro.gov.br"
+        operationalIndicators:
+          - id: "prazo-medio-conclusao-dias"
+            name: "Prazo médio de conclusão (dias)"
+            periodicity: "mensal"
+            formula: "media_dias(data_conclusao - data_abertura)"
+          - id: "taxa-conclusao-no-prazo"
+            name: "Taxa de conclusão no prazo (%)"
+            periodicity: "mensal"
+            formula: "tarefas_concluidas_no_prazo / tarefas_concluidas * 100"
+          - id: "taxa-retrabalho"
+            name: "Taxa de retrabalho (%)"
+            periodicity: "mensal"
+            formula: "tarefas_reabertas / tarefas_concluidas * 100"
+          - id: "conformidade-execucao-financeira"
+            name: "Conformidade da execução financeira (%)"
+            periodicity: "mensal"
+            formula: "eventos_conformes / eventos_total * 100"
   plano-competencias-sucon:
     priority: "high"
     executionPolicy:
@@ -34,13 +54,13 @@ tasks:
         - type: "review"
           approvalsNeeded: 1
           participants:
-            - type: "agent"
-              agentId: "00000000-0000-4000-8000-000000000001"
+            - type: "user"
+              userId: "sucon.revisor@tesouro.gov.br"
         - type: "approval"
           approvalsNeeded: 1
           participants:
             - type: "user"
-              userId: "board-user"
+              userId: "sucon.subsecretario@tesouro.gov.br"
     metadata:
       publicSector:
         unitSigla: "SUCON"
@@ -49,6 +69,26 @@ tasks:
         governanceClass: "ato_critico"
         auditTrailRequired: true
         source: "regimento_stn_20260415"
+        governanceParticipants:
+          reviewerUserId: "sucon.revisor@tesouro.gov.br"
+          approverUserId: "sucon.subsecretario@tesouro.gov.br"
+        operationalIndicators:
+          - id: "prazo-medio-conclusao-dias"
+            name: "Prazo médio de conclusão (dias)"
+            periodicity: "mensal"
+            formula: "media_dias(data_conclusao - data_abertura)"
+          - id: "taxa-conclusao-no-prazo"
+            name: "Taxa de conclusão no prazo (%)"
+            periodicity: "mensal"
+            formula: "tarefas_concluidas_no_prazo / tarefas_concluidas * 100"
+          - id: "taxa-retrabalho"
+            name: "Taxa de retrabalho (%)"
+            periodicity: "mensal"
+            formula: "tarefas_reabertas / tarefas_concluidas * 100"
+          - id: "tempestividade-fechamento-contabil"
+            name: "Tempestividade de fechamento contábil (%)"
+            periodicity: "mensal"
+            formula: "fechamentos_no_prazo / fechamentos_total * 100"
   plano-competencias-sugef:
     priority: "high"
     executionPolicy:
@@ -58,13 +98,13 @@ tasks:
         - type: "review"
           approvalsNeeded: 1
           participants:
-            - type: "agent"
-              agentId: "00000000-0000-4000-8000-000000000001"
+            - type: "user"
+              userId: "sugef.revisor@tesouro.gov.br"
         - type: "approval"
           approvalsNeeded: 1
           participants:
             - type: "user"
-              userId: "board-user"
+              userId: "sugef.subsecretario@tesouro.gov.br"
     metadata:
       publicSector:
         unitSigla: "SUGEF"
@@ -73,3 +113,23 @@ tasks:
         governanceClass: "ato_critico"
         auditTrailRequired: true
         source: "regimento_stn_20260415"
+        governanceParticipants:
+          reviewerUserId: "sugef.revisor@tesouro.gov.br"
+          approverUserId: "sugef.subsecretario@tesouro.gov.br"
+        operationalIndicators:
+          - id: "prazo-medio-conclusao-dias"
+            name: "Prazo médio de conclusão (dias)"
+            periodicity: "mensal"
+            formula: "media_dias(data_conclusao - data_abertura)"
+          - id: "taxa-conclusao-no-prazo"
+            name: "Taxa de conclusão no prazo (%)"
+            periodicity: "mensal"
+            formula: "tarefas_concluidas_no_prazo / tarefas_concluidas * 100"
+          - id: "taxa-retrabalho"
+            name: "Taxa de retrabalho (%)"
+            periodicity: "mensal"
+            formula: "tarefas_reabertas / tarefas_concluidas * 100"
+          - id: "cobertura-alertas-fiscais"
+            name: "Cobertura de alertas fiscais tratados (%)"
+            periodicity: "mensal"
+            formula: "alertas_tratados / alertas_total * 100"

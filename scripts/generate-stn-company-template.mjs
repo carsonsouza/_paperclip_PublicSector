@@ -1,5 +1,5 @@
 import path from "node:path";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -9,6 +9,8 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 const DEFAULT_INPUT = path.join(REPO_ROOT, "report", "stn", "stn-estrutura-competencias-20260415.json");
 const DEFAULT_OUTPUT_DIR = path.join(REPO_ROOT, "report", "stn", "template-stn-company");
 const DEFAULT_PILOT_OUTPUT_DIR = path.join(REPO_ROOT, "report", "stn", "template-stn-company-pilot");
+const DEFAULT_APPROVAL_MAP = path.join(REPO_ROOT, "report", "stn", "stn-approval-participants.json");
+const DEFAULT_INDICATORS_MAP = path.join(REPO_ROOT, "report", "stn", "stn-operational-indicators.json");
 
 function quoteYamlString(value) {
   return JSON.stringify(value);
@@ -114,6 +116,37 @@ function summarizeCompetencies(unit) {
   const remaining = unit.competencias.length - selected.length;
   if (remaining > 0) bullets.push(`- ... e mais ${remaining} competências registradas no catálogo institucional.`);
   return bullets.join("\n");
+}
+
+function fileExists(targetPath) {
+  return access(targetPath)
+    .then(() => true)
+    .catch((error) => {
+      if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") return false;
+      throw error;
+    });
+}
+
+function resolveGovernanceParticipants(unit, approvalMap) {
+  const unitSigla = normalizeSigla(unit.sigla);
+  const unitConfig = approvalMap?.units?.[unitSigla] ?? null;
+  const globalConfig = approvalMap?.global ?? null;
+
+  const fallbackReviewer = `${unitSigla.toLowerCase()}-reviewer`;
+  const fallbackApprover = `${unitSigla.toLowerCase()}-approver`;
+
+  return {
+    reviewerUserId: unitConfig?.reviewerUserId ?? globalConfig?.reviewerUserId ?? fallbackReviewer,
+    approverUserId: unitConfig?.approverUserId ?? globalConfig?.approverUserId ?? fallbackApprover,
+  };
+}
+
+function resolveOperationalIndicators(unit, indicatorsMap) {
+  const globalIndicators = Array.isArray(indicatorsMap?.global) ? indicatorsMap.global : [];
+  const unitIndicators = Array.isArray(indicatorsMap?.units?.[normalizeSigla(unit.sigla)])
+    ? indicatorsMap.units[normalizeSigla(unit.sigla)]
+    : [];
+  return [...globalIndicators, ...unitIndicators];
 }
 
 function normalizeSigla(value) {
@@ -246,6 +279,8 @@ export function generateTemplateFiles(structure, options = {}) {
     );
 
     const principalCompetencia = unit.competencias[0] ?? null;
+    const governanceParticipants = resolveGovernanceParticipants(unit, options.approvalMap ?? null);
+    const operationalIndicators = resolveOperationalIndicators(unit, options.indicatorsMap ?? null);
     tasksExtension[taskSlug] = {
       priority: "high",
       executionPolicy: {
@@ -255,12 +290,12 @@ export function generateTemplateFiles(structure, options = {}) {
           {
             type: "review",
             approvalsNeeded: 1,
-            participants: [{ type: "agent", agentId: "00000000-0000-4000-8000-000000000001" }],
+            participants: [{ type: "user", userId: governanceParticipants.reviewerUserId }],
           },
           {
             type: "approval",
             approvalsNeeded: 1,
-            participants: [{ type: "user", userId: "board-user" }],
+            participants: [{ type: "user", userId: governanceParticipants.approverUserId }],
           },
         ],
       },
@@ -274,6 +309,8 @@ export function generateTemplateFiles(structure, options = {}) {
           governanceClass: "ato_critico",
           auditTrailRequired: true,
           source: "regimento_stn_20260415",
+          governanceParticipants,
+          operationalIndicators,
         },
       },
     };
@@ -304,6 +341,8 @@ function parseArgs(argv) {
     outputDir: DEFAULT_OUTPUT_DIR,
     pilotSiglas: [],
     outputDirProvided: false,
+    approvalMap: null,
+    indicatorsMap: null,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -327,6 +366,16 @@ function parseArgs(argv) {
       i += 1;
       continue;
     }
+    if (arg === "--approval-map" && argv[i + 1]) {
+      options.approvalMap = path.resolve(argv[i + 1]);
+      i += 1;
+      continue;
+    }
+    if (arg === "--indicators-map" && argv[i + 1]) {
+      options.indicatorsMap = path.resolve(argv[i + 1]);
+      i += 1;
+      continue;
+    }
     if (arg === "--help" || arg === "-h") {
       return { help: true, ...options };
     }
@@ -344,10 +393,14 @@ function printHelp() {
     [
       "Usage: node scripts/generate-stn-company-template.mjs [--input <json>] [--output-dir <dir>]",
       "       node scripts/generate-stn-company-template.mjs --pilot-siglas SUGEF,SUAFI,SUCON",
+      "       node scripts/generate-stn-company-template.mjs --approval-map report/stn/stn-approval-participants.json",
+      "       node scripts/generate-stn-company-template.mjs --indicators-map report/stn/stn-operational-indicators.json",
       "",
       `Default input:      ${DEFAULT_INPUT}`,
       `Default output dir: ${DEFAULT_OUTPUT_DIR}`,
       `Pilot output dir:   ${DEFAULT_PILOT_OUTPUT_DIR}`,
+      `Default approval map: ${DEFAULT_APPROVAL_MAP}`,
+      `Default indicators map: ${DEFAULT_INDICATORS_MAP}`,
       "",
     ].join("\n"),
   );
@@ -362,7 +415,19 @@ async function main() {
 
   const raw = await readFile(args.input, "utf8");
   const structure = JSON.parse(raw);
-  const files = generateTemplateFiles(structure, { pilotSiglas: args.pilotSiglas });
+  const approvalMapPath = args.approvalMap
+    ? args.approvalMap
+    : (await fileExists(DEFAULT_APPROVAL_MAP) ? DEFAULT_APPROVAL_MAP : null);
+  const indicatorsMapPath = args.indicatorsMap
+    ? args.indicatorsMap
+    : (await fileExists(DEFAULT_INDICATORS_MAP) ? DEFAULT_INDICATORS_MAP : null);
+  const approvalMap = approvalMapPath ? JSON.parse(await readFile(approvalMapPath, "utf8")) : null;
+  const indicatorsMap = indicatorsMapPath ? JSON.parse(await readFile(indicatorsMapPath, "utf8")) : null;
+  const files = generateTemplateFiles(structure, {
+    pilotSiglas: args.pilotSiglas,
+    approvalMap,
+    indicatorsMap,
+  });
   await writeFiles(args.outputDir, files);
 
   const agentFiles = Object.keys(files).filter((entry) => entry.endsWith("/AGENTS.md")).length;

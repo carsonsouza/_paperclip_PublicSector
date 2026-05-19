@@ -1,0 +1,20 @@
+{
+  "global": {
+    "reviewerUserId": "stn.revisor@tesouro.gov.br",
+    "approverUserId": "stn.aprovador@tesouro.gov.br"
+  },
+  "units": {
+    "SUGEF": {
+      "reviewerUserId": "sugef.revisor@tesouro.gov.br",
+      "approverUserId": "sugef.subsecretario@tesouro.gov.br"
+    },
+    "SUAFI": {
+      "reviewerUserId": "suafi.revisor@tesouro.gov.br",
+      "approverUserId": "suafi.subsecretario@tesouro.gov.br"
+    },
+    "SUCON": {
+      "reviewerUserId": "sucon.revisor@tesouro.gov.br",
+      "approverUserId": "sucon.subsecretario@tesouro.gov.br"
+    }
+  }
+}
