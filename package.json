@@ -52,7 +52,9 @@
     "stn:extract-regimento": "node scripts/extract-stn-regimento.mjs",
     "stn:generate-template": "node scripts/generate-stn-company-template.mjs",
     "stn:generate-template:pilot": "node scripts/generate-stn-company-template.mjs --pilot-siglas SUGEF,SUAFI,SUCON",
-    "stn:validate-operacao-assistida": "node scripts/validate-stn-operacao-assistida.mjs"
+    "stn:validate-operacao-assistida": "node scripts/validate-stn-operacao-assistida.mjs",
+    "stn:build-import-payload": "node scripts/build-stn-import-payload.mjs",
+    "stn:pipeline": "node scripts/extract-stn-regimento.mjs && node scripts/generate-stn-company-template.mjs --pilot-siglas SUGEF,SUAFI,SUCON && node scripts/validate-stn-operacao-assistida.mjs && node scripts/build-stn-import-payload.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
