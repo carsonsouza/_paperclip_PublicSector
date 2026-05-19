@@ -136,7 +136,16 @@ function inferHierarchy(units) {
   });
 }
 
-export function extractStnStructure(htmlContent, sourceFile = null) {
+function resolveGeneratedAt(value) {
+  if (!value) return new Date().toISOString();
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error(`Invalid generatedAt value: ${value}`);
+  }
+  return parsed.toISOString();
+}
+
+export function extractStnStructure(htmlContent, sourceFile = null, options = {}) {
   const titleMatch = htmlContent.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
   const title = titleMatch ? cleanText(titleMatch[1]) : "Relatorio SIORG";
 
@@ -172,7 +181,7 @@ export function extractStnStructure(htmlContent, sourceFile = null) {
       title,
       file: sourceFile,
     },
-    generatedAt: new Date().toISOString(),
+    generatedAt: resolveGeneratedAt(options.generatedAt ?? process.env.STN_GENERATED_AT ?? null),
     summary: {
       totalUnidades: units.length,
       totalCompetencias: units.reduce((acc, unit) => acc + unit.totalCompetencias, 0),
@@ -187,6 +196,7 @@ function parseArgs(argv) {
   const options = {
     input: DEFAULT_INPUT,
     output: DEFAULT_OUTPUT,
+    generatedAt: process.env.STN_GENERATED_AT ?? null,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -204,6 +214,11 @@ function parseArgs(argv) {
     if (arg === "--help" || arg === "-h") {
       return { help: true, ...options };
     }
+    if (arg === "--generated-at" && argv[i + 1]) {
+      options.generatedAt = argv[i + 1];
+      i += 1;
+      continue;
+    }
   }
 
   return { help: false, ...options };
@@ -213,9 +228,11 @@ function printHelp() {
   process.stdout.write(
     [
       "Usage: node scripts/extract-stn-regimento.mjs [--input <file>] [--output <file>]",
+      "       node scripts/extract-stn-regimento.mjs --generated-at <iso8601>",
       "",
       `Default input:  ${DEFAULT_INPUT}`,
       `Default output: ${DEFAULT_OUTPUT}`,
+      "Env override:   STN_GENERATED_AT=<iso8601>",
       "",
     ].join("\n"),
   );
@@ -229,7 +246,9 @@ async function main() {
   }
 
   const html = await readFile(args.input, "utf8");
-  const extracted = extractStnStructure(html, path.basename(args.input));
+  const extracted = extractStnStructure(html, path.basename(args.input), {
+    generatedAt: args.generatedAt,
+  });
 
   await mkdir(path.dirname(args.output), { recursive: true });
   await writeFile(args.output, `${JSON.stringify(extracted, null, 2)}\n`, "utf8");

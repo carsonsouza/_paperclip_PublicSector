@@ -34,6 +34,20 @@ test("extractStnStructure parses units, competencies, and hierarchy", () => {
   assert.match(extracted.units[4].competencias[0].text, /a\) subitem da gerencia\./i);
 });
 
+test("extractStnStructure supports deterministic generatedAt", () => {
+  const html = `
+    <h1>Teste</h1>
+    <table><tbody>
+      <tr class="bold-row" name="ExScr1"><td>Secretaria do Tesouro Nacional</td><td>STN</td></tr>
+      <tr><td colspan="2" class="full-width">I - Competencia geral.</td></tr>
+    </tbody></table>
+  `;
+  const extracted = extractStnStructure(html, "fixture.html", {
+    generatedAt: "2026-01-01T00:00:00.000Z",
+  });
+  assert.equal(extracted.generatedAt, "2026-01-01T00:00:00.000Z");
+});
+
 test("extractStnStructure processes current STN regimento file", async () => {
   const sourcePath = path.resolve(process.cwd(), "20260415 relatorio-dinamico-estrutura-viva.html");
   const html = await readFile(sourcePath, "utf8");

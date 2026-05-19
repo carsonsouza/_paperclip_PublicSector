@@ -51,3 +51,21 @@ test("buildOperacaoAssistidaReport warns when indicator is missing", () => {
   assert.equal(report.summary.unitsWithoutIndicators, 1);
   assert.match(report.warnings[0], /sem indicadores operacionais/);
 });
+
+test("buildOperacaoAssistidaReport supports deterministic generatedAt", () => {
+  const structure = {
+    units: [
+      { nome: "Secretaria do Tesouro Nacional", sigla: "STN", level: 1, parentSigla: null, competencias: [] },
+      { nome: "Subsecretaria de Gestão Fiscal", sigla: "SUGEF", level: 2, parentSigla: "STN", competencias: [] },
+    ],
+  };
+  const report = buildOperacaoAssistidaReport({
+    structure,
+    pilotSiglas: ["SUGEF"],
+    approvalMap: null,
+    indicatorsMap: { global: [{ id: "kpi", name: "KPI", periodicity: "mensal" }] },
+    userCatalog: null,
+    generatedAt: "2026-01-01T00:00:00.000Z",
+  });
+  assert.equal(report.generatedAt, "2026-01-01T00:00:00.000Z");
+});

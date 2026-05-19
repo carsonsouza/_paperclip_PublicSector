@@ -119,6 +119,7 @@ export function buildOperacaoAssistidaReport({
   approvalMap,
   indicatorsMap,
   userCatalog,
+  generatedAt,
 }) {
   const allUnits = Array.isArray(structure?.units) ? structure.units : [];
   const selectedUnits = selectUnitsForPilot(allUnits, pilotSiglas);
@@ -164,7 +165,7 @@ export function buildOperacaoAssistidaReport({
       : "ready";
 
   return {
-    generatedAt: new Date().toISOString(),
+    generatedAt: generatedAt ?? process.env.STN_GENERATED_AT ?? new Date().toISOString(),
     status,
     pilotSiglas: pilotSiglas.map(normalizeSigla),
     summary: {
@@ -188,6 +189,7 @@ function parseArgs(argv) {
     userCatalog: DEFAULT_USER_CATALOG,
     output: DEFAULT_OUTPUT,
     pilotSiglas: [...DEFAULT_PILOT_SIGLAS],
+    generatedAt: process.env.STN_GENERATED_AT ?? null,
     help: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -208,6 +210,11 @@ function parseArgs(argv) {
       i += 1;
       continue;
     }
+    if (arg === "--generated-at" && argv[i + 1]) {
+      options.generatedAt = argv[i + 1];
+      i += 1;
+      continue;
+    }
     if (arg === "--help" || arg === "-h") options.help = true;
   }
   return options;
@@ -224,6 +231,7 @@ function printHelp() {
     "  --indicators-map <json>",
     "  --user-catalog <json>",
     "  --pilot-siglas <CSV>",
+    "  --generated-at <iso8601>",
     "  --output <json>",
     "",
     `Defaults:`,
@@ -234,6 +242,8 @@ function printHelp() {
     `  user-catalog:   ${DEFAULT_USER_CATALOG}`,
     `  output:         ${DEFAULT_OUTPUT}`,
     `  pilot-siglas:   ${DEFAULT_PILOT_SIGLAS.join(",")}`,
+    "Env override:",
+    "  STN_GENERATED_AT=<iso8601>",
     "",
   ].join("\n"));
 }
@@ -264,6 +274,7 @@ async function main() {
     approvalMap,
     indicatorsMap,
     userCatalog,
+    generatedAt: args.generatedAt,
   });
 
   const expectedFiles = generateTemplateFiles(structure, {
