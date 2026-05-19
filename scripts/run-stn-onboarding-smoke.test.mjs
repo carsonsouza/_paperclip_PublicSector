@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   assertApplyAllowed,
+  buildOnboardingExecutionReport,
   buildRequestBodyForTarget,
   requireApplyConfirmation,
   summarizePreviewPlan,
@@ -86,4 +87,32 @@ test("assertApplyAllowed accepts preview-only mode", () => {
     previewSummary: { errors: 2, collisions: 10 },
     maxCollisions: 0,
   }));
+});
+
+test("buildOnboardingExecutionReport returns consolidated execution metadata", () => {
+  const report = buildOnboardingExecutionReport({
+    apiBase: "http://127.0.0.1:3000",
+    previewRoute: "/api/companies/company-123/imports/preview",
+    applyRoute: "/api/companies/company-123/imports/apply",
+    requestBody: {
+      target: { mode: "existing_company", companyId: "company-123" },
+      collisionStrategy: "rename",
+      include: { company: true, agents: true },
+      agents: "all",
+    },
+    previewSummary: { warnings: 1, errors: 0, collisions: 2 },
+    previewPath: "report/stn/stn-import-preview-result.json",
+    previewSummaryPath: "report/stn/stn-import-preview-summary.json",
+    applyPath: "report/stn/stn-import-apply-result.json",
+    applyExecuted: true,
+  });
+
+  assert.equal(report.apiBase, "http://127.0.0.1:3000");
+  assert.equal(report.routes.preview, "/api/companies/company-123/imports/preview");
+  assert.equal(report.routes.apply, "/api/companies/company-123/imports/apply");
+  assert.equal(report.request.target.mode, "existing_company");
+  assert.equal(report.request.collisionStrategy, "rename");
+  assert.equal(report.preview.summary.collisions, 2);
+  assert.equal(report.apply.executed, true);
+  assert.equal(report.apply.outputFile, "report/stn/stn-import-apply-result.json");
 });

@@ -75,6 +75,42 @@ export function assertApplyAllowed({ apply, yes, previewSummary, maxCollisions }
   }
 }
 
+export function buildOnboardingExecutionReport({
+  apiBase,
+  previewRoute,
+  applyRoute,
+  requestBody,
+  previewSummary,
+  previewPath,
+  previewSummaryPath,
+  applyPath,
+  applyExecuted,
+}) {
+  return {
+    generatedAt: process.env.STN_GENERATED_AT ?? new Date().toISOString(),
+    apiBase,
+    routes: {
+      preview: previewRoute,
+      apply: applyRoute,
+    },
+    request: {
+      target: requestBody?.target ?? null,
+      collisionStrategy: requestBody?.collisionStrategy ?? null,
+      include: requestBody?.include ?? null,
+      agents: requestBody?.agents ?? null,
+    },
+    preview: {
+      outputFile: previewPath,
+      summaryFile: previewSummaryPath,
+      summary: previewSummary,
+    },
+    apply: {
+      executed: applyExecuted,
+      outputFile: applyPath,
+    },
+  };
+}
+
 async function postJson(apiBase, route, body, authHeaders = {}) {
   const response = await fetch(`${apiBase}${route}`, {
     method: "POST",
@@ -212,10 +248,24 @@ async function main() {
     applyPath = path.join(args.outputDir, "stn-import-apply-result.json");
     await writeFile(applyPath, `${JSON.stringify(applyResult, null, 2)}\n`, "utf8");
   }
+  const executionReport = buildOnboardingExecutionReport({
+    apiBase: args.apiBase,
+    previewRoute,
+    applyRoute,
+    requestBody,
+    previewSummary,
+    previewPath,
+    previewSummaryPath,
+    applyPath,
+    applyExecuted: args.apply,
+  });
+  const executionReportPath = path.join(args.outputDir, "stn-onboarding-execution-report.json");
+  await writeFile(executionReportPath, `${JSON.stringify(executionReport, null, 2)}\n`, "utf8");
 
   process.stdout.write([
     `Preview salvo em: ${previewPath}`,
     `Resumo do preview salvo em: ${previewSummaryPath}`,
+    `Relatório de execução salvo em: ${executionReportPath}`,
     args.apply ? `Apply salvo em: ${applyPath}` : "Apply não executado (use --apply --yes).",
     `Preview warnings: ${previewSummary.warnings} | errors: ${previewSummary.errors} | collisions: ${previewSummary.collisions}`,
     `API base: ${args.apiBase}`,
