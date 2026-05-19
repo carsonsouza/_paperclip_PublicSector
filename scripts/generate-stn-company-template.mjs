@@ -11,6 +11,7 @@ const DEFAULT_OUTPUT_DIR = path.join(REPO_ROOT, "report", "stn", "template-stn-c
 const DEFAULT_PILOT_OUTPUT_DIR = path.join(REPO_ROOT, "report", "stn", "template-stn-company-pilot");
 const DEFAULT_APPROVAL_MAP = path.join(REPO_ROOT, "report", "stn", "stn-approval-participants.json");
 const DEFAULT_INDICATORS_MAP = path.join(REPO_ROOT, "report", "stn", "stn-operational-indicators.json");
+const DEFAULT_VISUAL_IDENTITY = path.join(REPO_ROOT, "report", "stn", "stn-visual-identity.json");
 
 function quoteYamlString(value) {
   return JSON.stringify(value);
@@ -320,6 +321,11 @@ export function generateTemplateFiles(structure, options = {}) {
     company: {
       requireBoardApprovalForNewAgents: true,
     },
+    publicSector: options.visualIdentity
+      ? {
+        visualIdentity: options.visualIdentity,
+      }
+      : undefined,
     tasks: tasksExtension,
   });
 
@@ -343,6 +349,7 @@ function parseArgs(argv) {
     outputDirProvided: false,
     approvalMap: null,
     indicatorsMap: null,
+    visualIdentity: null,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -376,6 +383,11 @@ function parseArgs(argv) {
       i += 1;
       continue;
     }
+    if (arg === "--visual-identity" && argv[i + 1]) {
+      options.visualIdentity = path.resolve(argv[i + 1]);
+      i += 1;
+      continue;
+    }
     if (arg === "--help" || arg === "-h") {
       return { help: true, ...options };
     }
@@ -392,16 +404,18 @@ function printHelp() {
   process.stdout.write(
     [
       "Usage: node scripts/generate-stn-company-template.mjs [--input <json>] [--output-dir <dir>]",
-      "       node scripts/generate-stn-company-template.mjs --pilot-siglas SUGEF,SUAFI,SUCON",
-      "       node scripts/generate-stn-company-template.mjs --approval-map report/stn/stn-approval-participants.json",
-      "       node scripts/generate-stn-company-template.mjs --indicators-map report/stn/stn-operational-indicators.json",
+       "       node scripts/generate-stn-company-template.mjs --pilot-siglas SUGEF,SUAFI,SUCON",
+       "       node scripts/generate-stn-company-template.mjs --approval-map report/stn/stn-approval-participants.json",
+       "       node scripts/generate-stn-company-template.mjs --indicators-map report/stn/stn-operational-indicators.json",
+       "       node scripts/generate-stn-company-template.mjs --visual-identity report/stn/stn-visual-identity.json",
       "",
       `Default input:      ${DEFAULT_INPUT}`,
       `Default output dir: ${DEFAULT_OUTPUT_DIR}`,
       `Pilot output dir:   ${DEFAULT_PILOT_OUTPUT_DIR}`,
-      `Default approval map: ${DEFAULT_APPROVAL_MAP}`,
-      `Default indicators map: ${DEFAULT_INDICATORS_MAP}`,
-      "",
+       `Default approval map: ${DEFAULT_APPROVAL_MAP}`,
+       `Default indicators map: ${DEFAULT_INDICATORS_MAP}`,
+       `Default visual identity: ${DEFAULT_VISUAL_IDENTITY}`,
+       "",
     ].join("\n"),
   );
 }
@@ -421,12 +435,17 @@ async function main() {
   const indicatorsMapPath = args.indicatorsMap
     ? args.indicatorsMap
     : (await fileExists(DEFAULT_INDICATORS_MAP) ? DEFAULT_INDICATORS_MAP : null);
+  const visualIdentityPath = args.visualIdentity
+    ? args.visualIdentity
+    : (await fileExists(DEFAULT_VISUAL_IDENTITY) ? DEFAULT_VISUAL_IDENTITY : null);
   const approvalMap = approvalMapPath ? JSON.parse(await readFile(approvalMapPath, "utf8")) : null;
   const indicatorsMap = indicatorsMapPath ? JSON.parse(await readFile(indicatorsMapPath, "utf8")) : null;
+  const visualIdentity = visualIdentityPath ? JSON.parse(await readFile(visualIdentityPath, "utf8")) : null;
   const files = generateTemplateFiles(structure, {
     pilotSiglas: args.pilotSiglas,
     approvalMap,
     indicatorsMap,
+    visualIdentity,
   });
   await writeFiles(args.outputDir, files);
 

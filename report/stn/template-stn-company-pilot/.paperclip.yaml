@@ -1,5 +1,72 @@
 company:
   requireBoardApprovalForNewAgents: true
+publicSector:
+  visualIdentity:
+    schemaVersion: "stn-visual-identity/v1"
+    source:
+      document: "Manual de Identidade Visual da Secretaria do Tesouro Nacional"
+      edition: "3ª Edição"
+      publishedAt: "2016-05-16"
+      referenceFile: "Manual_de_Identidade_Visual.pdf"
+    governance:
+      ownerUnit: "CODIN"
+      contactEmail: "geifo.codin.df.stn@tesouro.gov.br"
+      approvalRequiredForPromotionalMaterials: true
+    branding:
+      logo:
+        allowedOrientations:
+          - "vertical"
+          - "horizontal"
+        allowedVariants:
+          - "color"
+          - "negative"
+          - "black_white"
+          - "outlined"
+        minimumBody: 10
+        preserveProportions: true
+      colors:
+        yellow:
+          pantone: "116"
+          pantoneMattePaper: "115"
+          cmyk:
+            c: 0
+            m: 15
+            y: 94
+            k: 0
+          rgb:
+            r: 255
+            g: 213
+            b: 0
+        green:
+          pantone: "362"
+          cmyk:
+            c: 76
+            m: 0
+            y: 100
+            k: 11
+          rgb:
+            r: 50
+            g: 156
+            b: 50
+        blue:
+          pantone: "287"
+          cmyk:
+            c: 100
+            m: 69
+            y: 0
+            k: 11
+          rgb:
+            r: 0
+            g: 74
+            b: 147
+      typography:
+        institutional:
+          - "Frutiger Roman"
+          - "Frutiger Bold"
+          - "Frutiger Roman Italic"
+          - "Frutiger Bold Italic"
+        documentsSuggested:
+          - "Calibri"
 tasks:
   plano-competencias-suafi:
     priority: "high"

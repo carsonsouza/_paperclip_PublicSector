@@ -13,6 +13,7 @@ const DEFAULT_TEMPLATE_DIR = path.join(REPO_ROOT, "report", "stn", "template-stn
 const DEFAULT_APPROVAL_MAP = path.join(REPO_ROOT, "report", "stn", "stn-approval-participants.json");
 const DEFAULT_INDICATORS_MAP = path.join(REPO_ROOT, "report", "stn", "stn-operational-indicators.json");
 const DEFAULT_USER_CATALOG = path.join(REPO_ROOT, "report", "stn", "stn-governance-user-catalog.json");
+const DEFAULT_VISUAL_IDENTITY = path.join(REPO_ROOT, "report", "stn", "stn-visual-identity.json");
 const DEFAULT_OUTPUT = path.join(REPO_ROOT, "report", "stn", "stn-operacao-assistida-report.json");
 const DEFAULT_PILOT_SIGLAS = ["SUGEF", "SUAFI", "SUCON"];
 
@@ -119,6 +120,7 @@ export function buildOperacaoAssistidaReport({
   approvalMap,
   indicatorsMap,
   userCatalog,
+  visualIdentity,
   generatedAt,
 }) {
   const allUnits = Array.isArray(structure?.units) ? structure.units : [];
@@ -129,6 +131,7 @@ export function buildOperacaoAssistidaReport({
   const warnings = [];
   let unresolvedUserRefs = 0;
   let unitsWithoutIndicators = 0;
+  const visualIdentityConfigured = Boolean(visualIdentity);
 
   for (const unit of topUnits) {
     const governanceParticipants = resolveGovernanceParticipants(unit, approvalMap);
@@ -162,7 +165,13 @@ export function buildOperacaoAssistidaReport({
     ? "attention_needed"
     : unresolvedUserRefs > 0
       ? "attention_needed"
-      : "ready";
+      : !visualIdentityConfigured
+        ? "attention_needed"
+        : "ready";
+
+  if (!visualIdentityConfigured) {
+    warnings.push("Manual de identidade visual STN não configurado para o template.");
+  }
 
   return {
     generatedAt: generatedAt ?? process.env.STN_GENERATED_AT ?? new Date().toISOString(),
@@ -174,6 +183,7 @@ export function buildOperacaoAssistidaReport({
       unresolvedUserRefs,
       unitsWithoutIndicators,
       userCatalogProvided: knownUsers.size > 0,
+      visualIdentityConfigured,
     },
     units,
     warnings,
@@ -187,6 +197,7 @@ function parseArgs(argv) {
     approvalMap: DEFAULT_APPROVAL_MAP,
     indicatorsMap: DEFAULT_INDICATORS_MAP,
     userCatalog: DEFAULT_USER_CATALOG,
+    visualIdentity: DEFAULT_VISUAL_IDENTITY,
     output: DEFAULT_OUTPUT,
     pilotSiglas: [...DEFAULT_PILOT_SIGLAS],
     generatedAt: process.env.STN_GENERATED_AT ?? null,
@@ -195,7 +206,7 @@ function parseArgs(argv) {
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if ((arg === "--input" || arg === "--template-dir" || arg === "--approval-map"
-      || arg === "--indicators-map" || arg === "--user-catalog" || arg === "--output")
+      || arg === "--indicators-map" || arg === "--user-catalog" || arg === "--visual-identity" || arg === "--output")
       && argv[i + 1]) {
       const target = arg.replace(/^--/, "").replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
       options[target] = path.resolve(argv[i + 1]);
@@ -230,6 +241,7 @@ function printHelp() {
     "  --approval-map <json>",
     "  --indicators-map <json>",
     "  --user-catalog <json>",
+    "  --visual-identity <json>",
     "  --pilot-siglas <CSV>",
     "  --generated-at <iso8601>",
     "  --output <json>",
@@ -240,6 +252,7 @@ function printHelp() {
     `  approval-map:   ${DEFAULT_APPROVAL_MAP}`,
     `  indicators-map: ${DEFAULT_INDICATORS_MAP}`,
     `  user-catalog:   ${DEFAULT_USER_CATALOG}`,
+    `  visual-identity:${DEFAULT_VISUAL_IDENTITY}`,
     `  output:         ${DEFAULT_OUTPUT}`,
     `  pilot-siglas:   ${DEFAULT_PILOT_SIGLAS.join(",")}`,
     "Env override:",
@@ -260,11 +273,12 @@ async function main() {
     return;
   }
 
-  const [structure, approvalMap, indicatorsMap, userCatalog] = await Promise.all([
+  const [structure, approvalMap, indicatorsMap, userCatalog, visualIdentity] = await Promise.all([
     loadJsonOrNull(args.input),
     loadJsonOrNull(args.approvalMap),
     loadJsonOrNull(args.indicatorsMap),
     loadJsonOrNull(args.userCatalog),
+    loadJsonOrNull(args.visualIdentity),
   ]);
   if (!structure) throw new Error(`Arquivo de estrutura não encontrado: ${args.input}`);
 
@@ -274,6 +288,7 @@ async function main() {
     approvalMap,
     indicatorsMap,
     userCatalog,
+    visualIdentity,
     generatedAt: args.generatedAt,
   });
 
@@ -281,6 +296,7 @@ async function main() {
     pilotSiglas: args.pilotSiglas,
     approvalMap,
     indicatorsMap,
+    visualIdentity,
   });
   const missingFiles = [];
   for (const relativePath of Object.keys(expectedFiles)) {

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-01-01T00:00:00.000Z",
+  "generatedAt": "2026-05-19T16:30:59.384Z",
   "status": "ready",
   "pilotSiglas": [
     "SUGEF",
@@ -11,7 +11,8 @@
     "topUnits": 3,
     "unresolvedUserRefs": 0,
     "unitsWithoutIndicators": 0,
-    "userCatalogProvided": true
+    "userCatalogProvided": true,
+    "visualIdentityConfigured": true
   },
   "units": [
     {

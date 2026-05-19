@@ -171,3 +171,44 @@ test("generateTemplateFiles applies operational indicators map", () => {
   assert.match(files[".paperclip.yaml"], /global-kpi/);
   assert.match(files[".paperclip.yaml"], /sugef-kpi/);
 });
+
+test("generateTemplateFiles includes visual identity metadata when provided", () => {
+  const structure = {
+    units: [
+      {
+        nome: "Secretaria do Tesouro Nacional",
+        sigla: "STN",
+        level: 1,
+        parentSigla: null,
+        competencias: [{ code: "I", text: "Competencia STN." }],
+      },
+      {
+        nome: "Subsecretaria de Gestão Fiscal",
+        sigla: "SUGEF",
+        level: 2,
+        parentSigla: "STN",
+        competencias: [{ code: "I", text: "Competencia SUGEF." }],
+      },
+    ],
+  };
+
+  const files = generateTemplateFiles(structure, {
+    visualIdentity: {
+      source: {
+        document: "Manual de Identidade Visual da STN",
+      },
+      branding: {
+        colors: {
+          yellow: {
+            pantone: "116",
+          },
+        },
+      },
+    },
+  });
+
+  assert.match(files[".paperclip.yaml"], /publicSector:/);
+  assert.match(files[".paperclip.yaml"], /visualIdentity:/);
+  assert.match(files[".paperclip.yaml"], /Manual de Identidade Visual da STN/);
+  assert.match(files[".paperclip.yaml"], /pantone: "116"/);
+});
